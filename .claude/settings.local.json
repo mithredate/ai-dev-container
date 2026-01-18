@@ -3,7 +3,14 @@
     "allow": [
       "Bash(git checkout:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Edit",
+      "Write",
+      "MultiEdit",
+      "Read",
+      "Bash(npm test:*)",
+      "Bash(docker run)",
+      "Bash(docker run:*)"
     ]
   }
 }
