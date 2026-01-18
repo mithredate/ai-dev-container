@@ -1,0 +1,175 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Claude Bridge Script
+# ====================
+# Routes commands from the Claude container to sidecar containers via Docker socket.
+# Config file: /workspace/.claude/bridge.yaml
+
+set -e
+
+# Configuration
+CONFIG_FILE="${BRIDGE_CONFIG:-/workspace/.claude/bridge.yaml}"
+
+# Colors for output (disabled if not a terminal)
+if [ -t 1 ]; then
+    RED='\033[0;31m'
+    YELLOW='\033[0;33m'
+    NC='\033[0m' # No Color
+else
+    RED=''
+    YELLOW=''
+    NC=''
+fi
+
+# Print error message and exit
+error() {
+    printf "${RED}error:${NC} %s\n" "$1" >&2
+    exit 1
+}
+
+# Print warning message
+warn() {
+    printf "${YELLOW}warning:${NC} %s\n" "$1" >&2
+}
+
+# Show usage information
+usage() {
+    cat <<EOF
+Usage: bridge <command> [arguments...]
+
+Routes commands to the appropriate sidecar container as defined in the
+bridge configuration file.
+
+Configuration file: ${CONFIG_FILE}
+
+Options:
+  --help, -h     Show this help message
+  --version      Show version information
+  --config       Show parsed configuration
+
+Examples:
+  bridge php -v                  Run 'php -v' in PHP container
+  bridge artisan migrate         Run Laravel migrations
+  bridge test:php --filter=User  Run PHPUnit tests with filter
+  bridge npm install             Install npm packages
+
+For configuration format, see: examples/claude-bridge.yaml
+EOF
+    exit 0
+}
+
+# Show version
+version() {
+    echo "bridge 1.0.0"
+    exit 0
+}
+
+# Check if yq is available
+check_yq() {
+    if ! command -v yq >/dev/null 2>&1; then
+        error "yq is required but not installed. Please install yq (https://github.com/mikefarah/yq)"
+    fi
+}
+
+# Check if config file exists
+check_config_exists() {
+    if [ ! -f "$CONFIG_FILE" ]; then
+        error "config file not found: ${CONFIG_FILE}
+
+Create a bridge.yaml configuration file at the above path.
+See examples/claude-bridge.yaml for the expected format."
+    fi
+}
+
+# Validate config file format
+validate_config() {
+    # Check if file is valid YAML
+    if ! yq '.' "$CONFIG_FILE" >/dev/null 2>&1; then
+        error "invalid YAML syntax in config file: ${CONFIG_FILE}
+
+Please check the file for syntax errors. Common issues:
+  - Missing colons after keys
+  - Incorrect indentation
+  - Unquoted special characters"
+    fi
+
+    # Check for required 'version' field
+    local version
+    version=$(yq '.version // ""' "$CONFIG_FILE")
+    if [ -z "$version" ]; then
+        error "config file missing required 'version' field
+
+Add 'version: \"1\"' at the top of your config file."
+    fi
+
+    # Check version is supported
+    if [ "$version" != "1" ]; then
+        error "unsupported config version: ${version}
+
+Currently supported versions: 1"
+    fi
+
+    # Check for required 'commands' section
+    local commands_type
+    commands_type=$(yq '.commands | type' "$CONFIG_FILE")
+    if [ "$commands_type" = "null" ] || [ "$commands_type" = "!!" ]; then
+        error "config file missing required 'commands' section
+
+The 'commands' section maps command aliases to containers.
+See examples/claude-bridge.yaml for the expected format."
+    fi
+}
+
+# Parse and display configuration
+show_config() {
+    check_yq
+    check_config_exists
+    validate_config
+
+    echo "Configuration file: ${CONFIG_FILE}"
+    echo ""
+    echo "Parsed configuration:"
+    yq '.' "$CONFIG_FILE"
+    exit 0
+}
+
+# Get a value from the config file
+config_get() {
+    yq "$1" "$CONFIG_FILE"
+}
+
+# Load and parse the configuration
+load_config() {
+    check_yq
+    check_config_exists
+    validate_config
+}
+
+# Main entry point
+main() {
+    # Handle options
+    case "${1:-}" in
+        --help|-h)
+            usage
+            ;;
+        --version)
+            version
+            ;;
+        --config)
+            show_config
+            ;;
+        "")
+            error "no command specified. Use 'bridge --help' for usage."
+            ;;
+    esac
+
+    # Load configuration for command routing
+    load_config
+
+    # Command routing will be implemented in US-006
+    # For now, just confirm config loaded successfully
+    echo "Config loaded successfully from: ${CONFIG_FILE}"
+    echo "Command routing not yet implemented - see US-006"
+}
+
+main "$@"
