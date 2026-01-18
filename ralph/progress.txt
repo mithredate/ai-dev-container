@@ -1,0 +1,16 @@
+## Codebase Patterns
+- Use hadolint via Docker for Dockerfile linting: `docker run --rm -i hadolint/hadolint < Dockerfile`
+- Node.js 20 Alpine base image: `node:20-alpine`
+- Create non-root user with: `addgroup -g 1000 name && adduser -u 1000 -G name -h /home/name -D name`
+
+---
+
+## 2026-01-18 - US-001
+- What was implemented: Base Dockerfile with Alpine Linux, Node.js 20+ LTS, multi-stage build structure, non-root 'claude' user, and /workspace working directory
+- Files changed: Dockerfile (created)
+- **Learnings for future iterations:**
+  - Node.js 20 Alpine image is `node:20-alpine`
+  - Multi-stage builds use `AS` alias for stages
+  - Alpine uses `addgroup`/`adduser` instead of `groupadd`/`useradd`
+  - hadolint returns empty output when Dockerfile passes
+---
