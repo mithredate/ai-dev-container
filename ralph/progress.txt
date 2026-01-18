@@ -4,6 +4,7 @@
 - Create non-root user with: `addgroup -g 1000 name && adduser -u 1000 -G name -h /home/name -D name`
 - Claude Code npm package: `@anthropic-ai/claude-code` (pin version for hadolint compliance)
 - Docker CLI on Alpine: `docker-cli` package (client only, no daemon) - pin version for hadolint
+- Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
 
 ---
 
@@ -35,4 +36,14 @@
   - hadolint DL3018 requires pinning apk package versions: `apk add --no-cache package=version`
   - Check available Alpine package version with: `docker run --rm node:20-alpine apk info <package>`
   - DOCKER_HOST can be set to empty string as default, allowing override at runtime or via docker-compose
+---
+
+## 2026-01-18 - US-004
+- What was implemented: Created bridge config YAML schema with documented example at examples/claude-bridge.yaml
+- Files changed: examples/claude-bridge.yaml (created)
+- **Learnings for future iterations:**
+  - Bridge config schema supports: version, default_container, containers (name overrides), commands (with container, exec, workdir)
+  - Use yq via Docker for YAML validation: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
+  - Example files should be well-commented to serve as both documentation and working templates
+  - YAML keys with special characters like colons need quoting: `"test:php"`
 ---
