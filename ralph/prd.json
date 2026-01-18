@@ -132,7 +132,8 @@
       "title": "Create docker-compose example with socket proxy",
       "description": "As a developer, I want example docker-compose.yml showing secure integration.",
       "acceptanceCriteria": [
-        "Example file at examples/docker-compose.yml",
+        "Example file at examples/docker-compose.yml (v1)",
+        "Another file at examples/compose.yml (v2)",
         "Includes tecnativa/docker-socket-proxy service",
         "Proxy configured: CONTAINERS=1, EXEC=1, POST=1 only",
         "Claude service depends_on socket-proxy",
@@ -141,7 +142,7 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

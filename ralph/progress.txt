@@ -95,3 +95,14 @@
   - Test image builds early to catch runtime errors (e.g., user/group conflicts)
   - Verify all CLI tools work with --help/--version before marking story complete
 ---
+
+## 2026-01-18 - US-009
+- What was implemented: Added compose.yml (v2 format) to complete docker-compose examples. The docker-compose.yml (v1) was already present.
+- Files changed: examples/compose.yml (created)
+- **Learnings for future iterations:**
+  - Docker Compose V2 uses compose.yml by default (no version field required)
+  - Both formats (v1 with version field, v2 without) are valid and work with `docker compose` command
+  - Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
+  - tecnativa/docker-socket-proxy is the standard secure Docker socket proxy image
+  - Key proxy settings: CONTAINERS=1, EXEC=1, POST=1 for Claude bridge script to work
+---
