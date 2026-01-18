@@ -1,0 +1,243 @@
+{
+  "project": "Claude-Brain Sidecar",
+  "branchName": "ralph/claude-brain-sidecar",
+  "description": "Lightweight Docker image containing Claude Code designed to be added as a service to any docker-compose.yml, delegating code execution to specialized sidecar containers via Docker socket proxy",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Create base Dockerfile with Alpine and Node.js",
+      "description": "As a developer, I need the foundation Docker image with Alpine Linux and Node.js 20+ LTS.",
+      "acceptanceCriteria": [
+        "Dockerfile uses Alpine Linux as base",
+        "Node.js 20+ LTS installed",
+        "Multi-stage build structure in place",
+        "Non-root user 'claude' created",
+        "Working directory set to /workspace",
+        "Typecheck passes (Dockerfile lint passes)"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add Claude Code CLI to Docker image",
+      "description": "As a developer, I need Claude Code installed globally in the image.",
+      "acceptanceCriteria": [
+        "claude-code CLI installed via npm globally",
+        "Claude command accessible from PATH",
+        "No language runtimes (PHP, Python, Go, Ruby) included",
+        "Typecheck passes (Dockerfile lint passes)"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Add Docker CLI client to image",
+      "description": "As a developer, I need Docker CLI (client only) in the image for container communication.",
+      "acceptanceCriteria": [
+        "Docker CLI client installed (no daemon)",
+        "DOCKER_HOST environment variable configurable",
+        "Image size remains under 150MB target",
+        "Typecheck passes (Dockerfile lint passes)"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Create bridge config YAML schema",
+      "description": "As a user, I need a documented YAML format for command-to-container mappings.",
+      "acceptanceCriteria": [
+        "claude-bridge.yaml schema documented in example file",
+        "Supports 'version' field",
+        "Supports 'default_container' field",
+        "Supports 'commands' mapping with container, exec, workdir",
+        "Supports 'containers' name overrides section",
+        "Example config file created at examples/claude-bridge.yaml",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Create bridge script - config parsing",
+      "description": "As a developer, I need the bridge script to read and parse the YAML config file.",
+      "acceptanceCriteria": [
+        "Shell script created at scripts/bridge",
+        "Reads config from /workspace/.claude/bridge.yaml",
+        "Parses YAML using lightweight parser (yq or similar)",
+        "Prints clear error if config file missing",
+        "Prints clear error if config format invalid",
+        "Typecheck passes (shellcheck passes)"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Create bridge script - command routing",
+      "description": "As a user, I want the bridge script to route commands to the correct container.",
+      "acceptanceCriteria": [
+        "Running 'bridge test:php' looks up container and exec command",
+        "Translates aliased command to 'docker exec' call",
+        "Falls back to default_container for unrecognized commands",
+        "Supports container name overrides from config",
+        "Supports additional arguments (e.g., bridge test:php --filter=UserTest)",
+        "Typecheck passes (shellcheck passes)"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Create bridge script - output streaming",
+      "description": "As a user, I want command output to stream in real-time with proper exit codes.",
+      "acceptanceCriteria": [
+        "Uses 'docker exec -t' for TTY allocation",
+        "Output streams in real-time (not buffered)",
+        "STDOUT and STDERR both captured and displayed",
+        "Exit codes propagate correctly from remote command",
+        "Non-zero exit = command failed",
+        "Typecheck passes (shellcheck passes)"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Install bridge script in Docker image",
+      "description": "As a developer, I need the bridge script included in the Docker image.",
+      "acceptanceCriteria": [
+        "Bridge script copied to /usr/local/bin/bridge",
+        "Script is executable",
+        "yq or YAML parser included in image",
+        "Running 'bridge --help' shows usage",
+        "Typecheck passes (Dockerfile lint passes)"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Create docker-compose example with socket proxy",
+      "description": "As a developer, I want example docker-compose.yml showing secure integration.",
+      "acceptanceCriteria": [
+        "Example file at examples/docker-compose.yml",
+        "Includes tecnativa/docker-socket-proxy service",
+        "Proxy configured: CONTAINERS=1, EXEC=1, POST=1 only",
+        "Claude service depends_on socket-proxy",
+        "Claude service sets DOCKER_HOST=tcp://socket-proxy:2375",
+        "Project volume mounted at /workspace in both services",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Add session persistence volume mount example",
+      "description": "As a user, I want my authentication to persist across container restarts.",
+      "acceptanceCriteria": [
+        "docker-compose example shows .claude volume mount",
+        "Mount maps ./.claude to /home/claude/.claude",
+        "Works with or without the mount (graceful fallback)",
+        "Documentation explains persistence behavior",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Add YOLO mode environment variable support",
+      "description": "As a power user, I want to configure minimal confirmation prompts.",
+      "acceptanceCriteria": [
+        "CLAUDE_YOLO=1 environment variable documented",
+        "docker-compose example shows how to enable",
+        "Default is disabled (safe mode)",
+        "Security warnings included in documentation",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Create CLAUDE.md template for multi-container projects",
+      "description": "As a user, I want a template CLAUDE.md with multi-container project sections.",
+      "acceptanceCriteria": [
+        "Template file at examples/CLAUDE.md.template",
+        "Includes project overview section",
+        "Includes container topology table",
+        "Includes bridge command reference section",
+        "Includes testing commands section",
+        "Includes 'Do Not' warnings section",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Create README with integration instructions",
+      "description": "As a developer, I want clear documentation for adding Claude to my project.",
+      "acceptanceCriteria": [
+        "README.md created with quick start section",
+        "Shows minimal docker-compose addition (5-10 lines)",
+        "Documents bridge.yaml configuration format",
+        "Includes security best practices section",
+        "Documents credential isolation (no ~/.ssh, ~/.aws mounts)",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Verify credential isolation in Dockerfile",
+      "description": "As a security-conscious developer, I want to ensure no sensitive host files are accessible.",
+      "acceptanceCriteria": [
+        "Dockerfile does not mount ~/.ssh",
+        "Dockerfile does not mount ~/.aws",
+        "Dockerfile does not mount ~/.config",
+        "Documentation warns against mounting home directory",
+        "Required credentials passed as env vars, not files",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Final image size optimization",
+      "description": "As a developer, I want the final image under 150MB.",
+      "acceptanceCriteria": [
+        "Multi-stage build removes build dependencies",
+        "No unnecessary packages in final stage",
+        "Alpine apk cache cleaned",
+        "npm cache cleaned after install",
+        "Final image size < 150MB",
+        "Typecheck passes (Dockerfile lint passes)"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
