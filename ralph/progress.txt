@@ -106,3 +106,16 @@
   - tecnativa/docker-socket-proxy is the standard secure Docker socket proxy image
   - Key proxy settings: CONTAINERS=1, EXEC=1, POST=1 for Claude bridge script to work
 ---
+
+## 2026-01-18 - US-010
+- What was implemented: Added session persistence volume mount to docker-compose examples with graceful fallback support
+- Files changed:
+  - examples/docker-compose.yml (modified - added .claude volume mount)
+  - examples/compose.yml (modified - added .claude volume mount)
+  - Dockerfile (modified - pre-create /home/claude/.claude directory)
+- **Learnings for future iterations:**
+  - Volume mounts for session persistence should be optional with graceful fallback
+  - Pre-creating directories in Dockerfile ensures container works with or without volume mount
+  - Document what gets persisted in volume (auth tokens, settings, session state) in compose comments
+  - The hadolint command via input redirection may be blocked; use volume mount instead
+---
