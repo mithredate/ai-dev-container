@@ -2,6 +2,7 @@
 - Use hadolint via Docker for Dockerfile linting: `docker run --rm -i hadolint/hadolint < Dockerfile`
 - Node.js 20 Alpine base image: `node:20-alpine`
 - Create non-root user with: `addgroup -g 1000 name && adduser -u 1000 -G name -h /home/name -D name`
+- Claude Code npm package: `@anthropic-ai/claude-code` (pin version for hadolint compliance)
 
 ---
 
@@ -13,4 +14,14 @@
   - Multi-stage builds use `AS` alias for stages
   - Alpine uses `addgroup`/`adduser` instead of `groupadd`/`useradd`
   - hadolint returns empty output when Dockerfile passes
+---
+
+## 2026-01-18 - US-002
+- What was implemented: Added claude-code CLI installation to Docker image via npm global install
+- Files changed: Dockerfile (modified)
+- **Learnings for future iterations:**
+  - The npm package for Claude Code is `@anthropic-ai/claude-code`
+  - hadolint requires pinned npm versions (DL3016) - use `package@version` format
+  - Clean npm cache with `npm cache clean --force` to reduce image size
+  - Check latest npm package version with: `npm view <package> version`
 ---
