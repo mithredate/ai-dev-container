@@ -145,6 +145,110 @@ load_config() {
     validate_config
 }
 
+# Resolve container name using containers section overrides
+# $1: logical container name
+# Returns: actual container name (or original if no override exists)
+resolve_container_name() {
+    local logical_name="$1"
+    local actual_name
+
+    # Look up in containers section
+    actual_name=$(yq ".containers.${logical_name} // \"\"" "$CONFIG_FILE")
+
+    # If no override, use the logical name as-is
+    if [ -z "$actual_name" ] || [ "$actual_name" = "null" ]; then
+        echo "$logical_name"
+    else
+        echo "$actual_name"
+    fi
+}
+
+# Look up command configuration
+# $1: command name
+# Sets global variables: CMD_CONTAINER, CMD_EXEC, CMD_WORKDIR
+lookup_command() {
+    local cmd="$1"
+    local cmd_config
+
+    # Check if command exists in config
+    cmd_config=$(yq ".commands[\"${cmd}\"] // \"\"" "$CONFIG_FILE")
+
+    if [ -z "$cmd_config" ] || [ "$cmd_config" = "null" ]; then
+        # Command not found, check for default_container
+        local default_container
+        default_container=$(yq '.default_container // ""' "$CONFIG_FILE")
+
+        if [ -z "$default_container" ] || [ "$default_container" = "null" ]; then
+            error "unknown command: ${cmd}
+
+This command is not defined in the bridge configuration.
+Add it to the 'commands' section in: ${CONFIG_FILE}
+
+Or set 'default_container' to handle unrecognized commands."
+        fi
+
+        # Use default container with the command itself as exec
+        CMD_CONTAINER=$(resolve_container_name "$default_container")
+        CMD_EXEC="$cmd"
+        CMD_WORKDIR=""
+        return 0
+    fi
+
+    # Command found, extract configuration
+    local container_logical
+    container_logical=$(yq ".commands[\"${cmd}\"].container // \"\"" "$CONFIG_FILE")
+
+    if [ -z "$container_logical" ] || [ "$container_logical" = "null" ]; then
+        error "command '${cmd}' is missing required 'container' field in config"
+    fi
+
+    CMD_CONTAINER=$(resolve_container_name "$container_logical")
+    CMD_EXEC=$(yq ".commands[\"${cmd}\"].exec // \"\"" "$CONFIG_FILE")
+    CMD_WORKDIR=$(yq ".commands[\"${cmd}\"].workdir // \"\"" "$CONFIG_FILE")
+
+    # Exec defaults to the command name if not specified
+    if [ -z "$CMD_EXEC" ] || [ "$CMD_EXEC" = "null" ]; then
+        CMD_EXEC="$cmd"
+    fi
+
+    # Clean up null workdir
+    if [ "$CMD_WORKDIR" = "null" ]; then
+        CMD_WORKDIR=""
+    fi
+}
+
+# Build and execute docker command
+# $1: command name
+# $@: additional arguments to pass to the command
+route_command() {
+    local cmd="$1"
+    shift  # Remove command name, leaving only additional args
+
+    # Look up command configuration
+    lookup_command "$cmd"
+
+    # Build docker exec command
+    local docker_cmd="docker exec"
+
+    # Add workdir if specified
+    if [ -n "$CMD_WORKDIR" ]; then
+        docker_cmd="$docker_cmd -w $CMD_WORKDIR"
+    fi
+
+    # Add container name
+    docker_cmd="$docker_cmd $CMD_CONTAINER"
+
+    # Add the exec command
+    # Note: CMD_EXEC may contain spaces (e.g., "php artisan")
+    # We need to handle this properly
+    docker_cmd="$docker_cmd $CMD_EXEC"
+
+    # Execute the command with any additional arguments
+    # Using eval to properly handle CMD_EXEC with spaces
+    # shellcheck disable=SC2086
+    $docker_cmd "$@"
+}
+
 # Main entry point
 main() {
     # Handle options
@@ -166,10 +270,8 @@ main() {
     # Load configuration for command routing
     load_config
 
-    # Command routing will be implemented in US-006
-    # For now, just confirm config loaded successfully
-    echo "Config loaded successfully from: ${CONFIG_FILE}"
-    echo "Command routing not yet implemented - see US-006"
+    # Route the command to the appropriate container
+    route_command "$@"
 }
 
 main "$@"
