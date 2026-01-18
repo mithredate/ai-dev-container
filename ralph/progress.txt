@@ -60,3 +60,14 @@
   - Bridge script uses BRIDGE_CONFIG env var to allow config path override (defaults to /workspace/.claude/bridge.yaml)
   - yq queries: `.version // ""` provides default value if key missing, `.key | type` checks if key exists
 ---
+
+## 2026-01-18 - US-006
+- What was implemented: Added command routing functionality to the bridge script including command lookup, container name resolution, docker exec command building, and argument passthrough
+- Files changed: scripts/bridge (modified)
+- **Learnings for future iterations:**
+  - yq bracket notation for quoted keys: `.commands["test:php"]` to access keys with special characters
+  - Global variables (CMD_CONTAINER, CMD_EXEC, CMD_WORKDIR) work well for passing data between functions in shell scripts
+  - Use `shift` to separate first argument from remaining ones for cleaner argument handling
+  - `# shellcheck disable=SC2086` allows word splitting when intentional (for building command strings)
+  - Default container fallback requires checking both empty string and "null" (yq returns "null" for missing keys)
+---
