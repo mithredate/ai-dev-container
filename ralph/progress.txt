@@ -5,6 +5,8 @@
 - Claude Code npm package: `@anthropic-ai/claude-code` (pin version for hadolint compliance)
 - Docker CLI on Alpine: `docker-cli` package (client only, no daemon) - pin version for hadolint
 - Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
+- Shellcheck via Docker: `docker run --rm -v /path:/scripts koalaman/shellcheck:stable /scripts/scriptname`
+- Use `# shellcheck shell=dash` directive for Alpine shell scripts (dash supports `local` keyword)
 
 ---
 
@@ -46,4 +48,15 @@
   - Use yq via Docker for YAML validation: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
   - Example files should be well-commented to serve as both documentation and working templates
   - YAML keys with special characters like colons need quoting: `"test:php"`
+---
+
+## 2026-01-18 - US-005
+- What was implemented: Created bridge shell script with YAML config parsing using yq, including error handling for missing or invalid config files
+- Files changed: scripts/bridge (created)
+- **Learnings for future iterations:**
+  - Use `# shellcheck shell=dash` directive to tell shellcheck that the script targets dash/ash (which supports `local`)
+  - Alpine's sh is actually BusyBox ash which supports `local` keyword unlike strict POSIX sh
+  - Shellcheck via Docker: `docker run --rm -v /path:/scripts koalaman/shellcheck:stable /scripts/scriptname`
+  - Bridge script uses BRIDGE_CONFIG env var to allow config path override (defaults to /workspace/.claude/bridge.yaml)
+  - yq queries: `.version // ""` provides default value if key missing, `.key | type` checks if key exists
 ---
