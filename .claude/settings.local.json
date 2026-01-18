@@ -10,7 +10,9 @@
       "Read",
       "Bash(npm test:*)",
       "Bash(docker run)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(docker build)",
+      "Bash(docker build:*)"
     ]
   }
 }
