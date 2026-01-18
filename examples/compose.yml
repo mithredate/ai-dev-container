@@ -77,6 +77,13 @@ services:
     volumes:
       # Mount your project at /workspace (Claude's working directory)
       - .:/workspace
+      # Session persistence: keeps authentication and settings across container restarts
+      # This is optional - Claude will work without it but you'll need to re-authenticate each time
+      # The .claude directory stores:
+      #   - Authentication tokens
+      #   - User preferences/settings
+      #   - Session state
+      - ./.claude:/home/claude/.claude
     stdin_open: true
     tty: true
     # Run interactively: docker compose run claude

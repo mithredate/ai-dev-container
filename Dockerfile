@@ -33,7 +33,9 @@ ENV DOCKER_HOST=""
 # Create non-root user 'claude'
 # Note: node:20-alpine already has node user/group at 1000, so we use 1001
 RUN addgroup -g 1001 claude && \
-    adduser -u 1001 -G claude -h /home/claude -D claude
+    adduser -u 1001 -G claude -h /home/claude -D claude && \
+    mkdir -p /home/claude/.claude && \
+    chown claude:claude /home/claude/.claude
 
 # Set working directory
 WORKDIR /workspace
