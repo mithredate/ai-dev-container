@@ -71,3 +71,14 @@
   - `# shellcheck disable=SC2086` allows word splitting when intentional (for building command strings)
   - Default container fallback requires checking both empty string and "null" (yq returns "null" for missing keys)
 ---
+
+## 2026-01-18 - US-007
+- What was implemented: Added real-time output streaming with TTY allocation (-t flag) and exit code propagation to the bridge script
+- Files changed: scripts/bridge (modified)
+- **Learnings for future iterations:**
+  - Use `[ -t 1 ]` to check if STDOUT is connected to a terminal before allocating TTY
+  - TTY allocation (`docker exec -t`) enables real-time unbuffered output streaming
+  - Exit codes automatically propagate when the docker exec command is the last command in the function/script
+  - STDOUT and STDERR stream directly through docker exec without needing special handling
+  - Document output behavior in the usage/help section for user awareness
+---
