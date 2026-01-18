@@ -1,12 +1,14 @@
 ## Codebase Patterns
 - Use hadolint via Docker for Dockerfile linting: `docker run --rm -i hadolint/hadolint < Dockerfile`
 - Node.js 20 Alpine base image: `node:20-alpine`
-- Create non-root user with: `addgroup -g 1000 name && adduser -u 1000 -G name -h /home/name -D name`
+- node:20-alpine has existing node user/group at UID/GID 1000 - use 1001 for custom users
+- Create non-root user with: `addgroup -g 1001 name && adduser -u 1001 -G name -h /home/name -D name`
 - Claude Code npm package: `@anthropic-ai/claude-code` (pin version for hadolint compliance)
 - Docker CLI on Alpine: `docker-cli` package (client only, no daemon) - pin version for hadolint
 - Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
 - Shellcheck via Docker: `docker run --rm -v /path:/scripts koalaman/shellcheck:stable /scripts/scriptname`
 - Use `# shellcheck shell=dash` directive for Alpine shell scripts (dash supports `local` keyword)
+- yq binary can be downloaded via multi-stage build from GitHub releases
 
 ---
 
@@ -81,4 +83,15 @@
   - Exit codes automatically propagate when the docker exec command is the last command in the function/script
   - STDOUT and STDERR stream directly through docker exec without needing special handling
   - Document output behavior in the usage/help section for user awareness
+---
+
+## 2026-01-18 - US-008
+- What was implemented: Verified and fixed bridge script installation in Docker image. Fixed UID/GID conflict with pre-existing node user in node:20-alpine base image.
+- Files changed: Dockerfile (modified - changed claude user UID/GID from 1000 to 1001)
+- **Learnings for future iterations:**
+  - node:20-alpine already has a 'node' user/group with UID/GID 1000
+  - Must use different IDs (e.g., 1001) when creating custom users in node-based images
+  - yq binary is downloaded in builder stage and copied to runtime stage for YAML parsing
+  - Test image builds early to catch runtime errors (e.g., user/group conflicts)
+  - Verify all CLI tools work with --help/--version before marking story complete
 ---
