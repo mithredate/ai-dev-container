@@ -47,6 +47,11 @@ Options:
   --version      Show version information
   --config       Show parsed configuration
 
+Output:
+  - Output streams in real-time (TTY allocated when in a terminal)
+  - Both STDOUT and STDERR are captured and displayed
+  - Exit codes propagate from the remote command
+
 Examples:
   bridge php -v                  Run 'php -v' in PHP container
   bridge artisan migrate         Run Laravel migrations
@@ -220,6 +225,7 @@ Or set 'default_container' to handle unrecognized commands."
 # Build and execute docker command
 # $1: command name
 # $@: additional arguments to pass to the command
+# Exit code: propagates from the remote command
 route_command() {
     local cmd="$1"
     shift  # Remove command name, leaving only additional args
@@ -228,7 +234,14 @@ route_command() {
     lookup_command "$cmd"
 
     # Build docker exec command
+    # -t: Allocate pseudo-TTY for real-time output streaming
+    #     Only allocate if we're running in a terminal
     local docker_cmd="docker exec"
+
+    # Add TTY allocation for real-time output if we have a terminal
+    if [ -t 1 ]; then
+        docker_cmd="$docker_cmd -t"
+    fi
 
     # Add workdir if specified
     if [ -n "$CMD_WORKDIR" ]; then
@@ -244,9 +257,12 @@ route_command() {
     docker_cmd="$docker_cmd $CMD_EXEC"
 
     # Execute the command with any additional arguments
+    # STDOUT and STDERR both stream directly to the terminal
+    # Exit code propagates from the remote command
     # Using eval to properly handle CMD_EXEC with spaces
     # shellcheck disable=SC2086
     $docker_cmd "$@"
+    # Exit code is automatically propagated since this is the last command
 }
 
 # Main entry point
