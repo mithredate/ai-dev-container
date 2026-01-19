@@ -35,6 +35,13 @@ COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 # Copy entrypoint script
 COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
 
+# Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
+# These scripts route commands through the bridge when BRIDGE_ENABLED=1
+COPY --chmod=755 scripts/wrappers/ /scripts/wrappers/
+
+# Prepend wrappers directory to PATH so wrappers take precedence
+ENV PATH="/scripts/wrappers:$PATH"
+
 # Configure Docker host (override via docker-compose or runtime env)
 ENV DOCKER_HOST=""
 
