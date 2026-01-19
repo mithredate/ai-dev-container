@@ -169,3 +169,18 @@
   - Reference tables are helpful for configuration schemas
   - Link to example files rather than duplicating content
 ---
+
+## 2026-01-19 - US-014
+- What was implemented: Verified credential isolation in Dockerfile and documentation. Added explicit warnings about sensitive directory mounts to CLAUDE.md.template
+- Files changed:
+  - examples/CLAUDE.md.template (modified - added "Do NOT mount sensitive host directories" section)
+- **Verification completed:**
+  - Dockerfile does not mount ~/.ssh, ~/.aws, ~/.config, or home directory (PASS - Dockerfile has no volume mounts)
+  - README.md already warns against mounting sensitive directories (lines 158-177)
+  - README.md documents passing credentials as env vars (lines 173-177)
+  - Docker-compose examples only mount project directory and .claude session data
+- **Learnings for future iterations:**
+  - Security verification stories may require enhancing documentation rather than code changes
+  - Warning messages are more effective with concrete "WRONG vs CORRECT" examples
+  - The CLAUDE.md.template "Do Not" section is the right place for multi-container security warnings
+---
