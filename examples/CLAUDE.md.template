@@ -1,0 +1,207 @@
+# Project: [YOUR PROJECT NAME]
+
+> Claude Code context file for multi-container development environments.
+> Copy this template to your project root as `CLAUDE.md` and customize it.
+
+## Project Overview
+
+[Brief description of what this project does]
+
+**Tech Stack:**
+- Backend: [e.g., PHP 8.2 / Laravel 10]
+- Frontend: [e.g., Node.js 20 / Vue 3]
+- Database: [e.g., PostgreSQL 15]
+- Cache: [e.g., Redis 7]
+
+**Key Directories:**
+- `/src` - Application source code
+- `/tests` - Test suites
+- `/docs` - Documentation
+
+## Container Topology
+
+This project uses multiple containers orchestrated via Docker Compose. Commands are routed through the `bridge` script.
+
+| Container | Purpose | Working Directory | Base Image |
+|-----------|---------|-------------------|------------|
+| `app` | Main application (PHP/Laravel) | `/var/www/html` | `php:8.2-fpm-alpine` |
+| `node` | Frontend build/dev | `/app` | `node:20-alpine` |
+| `db` | PostgreSQL database | N/A | `postgres:15-alpine` |
+| `redis` | Cache/Queue | N/A | `redis:7-alpine` |
+| `claude` | AI coding assistant | `/workspace` | `claude-brain-sidecar` |
+
+**Network:** All containers share the default Docker Compose network.
+
+## Bridge Command Reference
+
+Use the `bridge` command to execute commands in the appropriate containers:
+
+### PHP/Backend Commands
+
+```bash
+# Run PHP commands
+bridge php -v                      # Check PHP version
+bridge php artisan migrate         # Run Laravel migrations
+bridge php artisan migrate:fresh   # Fresh migration (destructive)
+
+# Composer package management
+bridge composer install            # Install dependencies
+bridge composer require vendor/pkg # Add a package
+bridge composer update             # Update dependencies
+
+# Artisan shortcuts
+bridge artisan tinker              # Laravel REPL
+bridge artisan queue:work          # Process queued jobs
+bridge artisan cache:clear         # Clear application cache
+```
+
+### Node.js/Frontend Commands
+
+```bash
+# Node.js commands
+bridge node -v                     # Check Node version
+bridge npm install                 # Install dependencies
+bridge npm run dev                 # Start development server
+bridge npm run build               # Production build
+
+# NPX for one-off commands
+bridge npx eslint src/             # Run linter
+bridge npx prettier --write .      # Format code
+```
+
+### Database Commands
+
+```bash
+# PostgreSQL
+bridge psql -U myapp -d myapp      # Connect to database
+bridge psql -c "SELECT version();" # Run inline query
+
+# MySQL (if using MySQL)
+bridge mysql -u root -p myapp      # Connect to database
+```
+
+### Testing Commands
+
+```bash
+# PHP Tests
+bridge test:php                    # Run full test suite
+bridge test:php --filter=UserTest  # Run specific test class
+bridge phpunit --coverage-html cov # Generate coverage report
+
+# JavaScript Tests
+bridge test:js                     # Run Jest/Vitest tests
+bridge npm run test:e2e            # Run end-to-end tests
+```
+
+## Testing Strategy
+
+### Running Tests
+
+Always run tests before committing:
+
+```bash
+# Full test suite
+bridge test:php && bridge test:js
+
+# Quick smoke test
+bridge test:php --filter=SmokeTest
+```
+
+### Test Database
+
+Tests use a separate database or transactions. The test environment:
+- Uses database transactions (rolled back after each test)
+- May use SQLite in-memory for speed
+- Resets state between test runs
+
+### CI/CD Pipeline
+
+Tests are also run in CI. Ensure these commands pass locally:
+```bash
+bridge phpunit
+bridge npm run lint
+bridge npm run typecheck
+bridge npm run build
+```
+
+## Do Not
+
+**Critical warnings for working in this multi-container environment:**
+
+### Do NOT install packages in the Claude container
+```bash
+# WRONG - This installs in Claude container (no runtimes available)
+npm install lodash
+pip install requests
+
+# CORRECT - Use bridge to install in the appropriate container
+bridge npm install lodash
+bridge composer require vendor/package
+```
+
+### Do NOT run commands directly
+```bash
+# WRONG - Claude container doesn't have these runtimes
+php artisan migrate
+node script.js
+python manage.py
+
+# CORRECT - Use bridge to route to correct container
+bridge php artisan migrate
+bridge node script.js
+bridge python manage.py
+```
+
+### Do NOT modify container files directly via paths
+```bash
+# WRONG - Container filesystem paths don't exist in Claude container
+cat /var/www/html/config/app.php
+
+# CORRECT - Use workspace paths (mounted in all containers)
+cat /workspace/config/app.php
+```
+
+### Do NOT assume database is on localhost
+```bash
+# WRONG - Database is in a separate container
+psql -h localhost -U user
+
+# CORRECT - Use bridge or container name
+bridge psql -U myapp
+# Or specify the container hostname:
+# psql -h db -U myapp (from within a container)
+```
+
+### Do NOT store credentials in code
+- Use environment variables for API keys and secrets
+- Database credentials come from docker-compose environment
+- Never commit `.env` files with real credentials
+
+### Do NOT expose the Docker socket directly
+- Always use the socket proxy (`tecnativa/docker-socket-proxy`)
+- The proxy limits Docker API access to safe operations only
+- Never mount `/var/run/docker.sock` directly to the Claude container
+
+## Codebase Patterns
+
+[Add project-specific patterns here as you discover them]
+
+- Example: Use `DB::transaction()` for multi-table operations
+- Example: All API endpoints return JSON with `data` wrapper
+- Example: Frontend components live in `resources/js/components/`
+
+## Useful Context
+
+### Authentication
+[Describe how auth works in your project]
+
+### API Structure
+[Describe your API conventions]
+
+### State Management
+[Describe frontend state management approach]
+
+---
+
+*This file helps Claude Code understand your multi-container project structure.*
+*Update it as your project evolves.*
