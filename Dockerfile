@@ -1,10 +1,13 @@
 # Stage 1: Build stage (for downloading build-time dependencies only)
 FROM node:20-alpine AS builder
 
+# TARGETARCH is automatically set by Docker BuildKit for multi-arch builds
+ARG TARGETARCH
+
 # Download yq binary (YAML parser) - wget is used only in builder stage
 # hadolint ignore=DL3018
 RUN apk add --no-cache wget && \
-    wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_amd64" && \
+    wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_${TARGETARCH}" && \
     chmod +x /usr/local/bin/yq
 
 # Stage 2: Runtime stage - minimal production image
