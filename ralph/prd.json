@@ -108,7 +108,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

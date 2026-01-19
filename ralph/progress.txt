@@ -106,3 +106,22 @@ Started: Mon Jan 19 01:26:29 CET 2026
   - Using a separate tag like `:buildcache` keeps cache separate from versioned images
   - The ref uses same image name but different tag to stay in same namespace
 ---
+
+## 2026-01-19 - US-007
+- What was implemented:
+  - Added Trivy vulnerability scanning to the GitHub Actions workflow
+  - Generates SARIF report for GitHub Security tab integration
+  - Upload SARIF results using github/codeql-action/upload-sarif@v3
+  - Added step to log HIGH vulnerabilities as warnings (exit-code: 0)
+  - Added step to fail build on CRITICAL vulnerabilities (exit-code: 1)
+  - Added security-events: write permission to job for SARIF upload
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - aquasecurity/trivy-action@master scans container images for vulnerabilities
+  - Use separate steps for SARIF generation and table output for different purposes
+  - SARIF upload requires `security-events: write` permission in the job
+  - `exit-code: '1'` makes the step fail if vulnerabilities matching severity are found
+  - `exit-code: '0'` allows the step to pass while still logging vulnerabilities
+  - Use image tag with SHA (e.g., sha-abc1234) to reference the built image for scanning
+---
