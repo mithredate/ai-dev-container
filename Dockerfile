@@ -1,21 +1,26 @@
-# Stage 1: Build stage (for downloading build-time dependencies only)
-FROM node:20-alpine AS builder
+# Stage 1: Go builder stage for compiling the bridge binary
+FROM golang:1.24-alpine AS builder
 
-# TARGETARCH is automatically set by Docker BuildKit for multi-arch builds
-ARG TARGETARCH
+WORKDIR /build
 
-# Download yq binary (YAML parser) - wget is used only in builder stage
-# hadolint ignore=DL3018
-RUN apk add --no-cache wget && \
-    wget -qO /usr/local/bin/yq "https://github.com/mikefarah/yq/releases/download/v4.50.1/yq_linux_${TARGETARCH}" && \
-    chmod +x /usr/local/bin/yq
+# Copy Go module files
+COPY go.mod go.sum ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY cmd/ ./cmd/
+
+# Build static binary (CGO_ENABLED=0 for fully static linking)
+RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/bridge ./cmd/bridge
 
 # Stage 2: Runtime stage - minimal production image
 FROM node:20-alpine AS runtime
 
 # Install only essential runtime dependencies:
 # - docker-cli: Docker client for container communication (no daemon)
-# Multi-stage build ensures build tools (wget) are not included
+# Multi-stage build ensures Go compiler and build tools are not included
 RUN apk add --no-cache docker-cli=29.1.3-r1 && \
     rm -rf /var/cache/apk/*
 
@@ -24,11 +29,20 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.12 && \
     npm cache clean --force && \
     rm -rf /tmp/*
 
-# Copy yq binary from builder stage (avoids wget in runtime image)
-COPY --from=builder /usr/local/bin/yq /usr/local/bin/yq
+# Copy Go bridge binary from builder stage
+COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 
-# Copy and set permissions for bridge script in a single layer
-COPY --chmod=755 scripts/bridge /usr/local/bin/bridge
+# Copy entrypoint script
+COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
+
+# Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
+# These scripts route commands through the bridge when BRIDGE_ENABLED=1
+# The node wrapper has special handling via CLAUDE_STARTING env var to allow Claude Code
+# (a Node.js app) to start with native node, while routing subsequent node calls through the bridge
+COPY --chmod=755 scripts/wrappers /scripts/wrappers/
+
+# Prepend wrappers directory to PATH so wrappers take precedence
+ENV PATH="/scripts/wrappers:$PATH"
 
 # Configure Docker host (override via docker-compose or runtime env)
 ENV DOCKER_HOST=""
@@ -46,5 +60,5 @@ WORKDIR /workspace
 # Switch to non-root user
 USER claude
 
-# Default command
-CMD ["sh"]
+# Start Claude CLI via entrypoint
+ENTRYPOINT ["/scripts/entrypoint.sh"]

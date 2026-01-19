@@ -1,0 +1,30 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Node wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+#
+# Special handling for CLAUDE_STARTING=1:
+# When the container starts, the entrypoint sets CLAUDE_STARTING=1 before running claude.
+# This allows Claude Code (a Node.js app) to start using the native node binary.
+# After the initial invocation, CLAUDE_STARTING is unset so subsequent node calls
+# from Claude (e.g., running user's project code) are routed through the bridge.
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    if [ "$CLAUDE_STARTING" = "1" ]; then
+        # Claude is starting - use native node and unset flag for child processes
+        unset CLAUDE_STARTING
+        exec /usr/local/bin/node "$@"
+    else
+        # Normal operation - route to bridge
+        exec bridge node "$@"
+    fi
+else
+    # Bridge not enabled - find and use the real node binary
+    SELF=$(command -v node)
+    for BIN in /usr/local/bin/node /usr/bin/node; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: node not found (BRIDGE_ENABLED not set and no local node installation)" >&2
+    exit 127
+fi

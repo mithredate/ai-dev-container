@@ -1,0 +1,142 @@
+# Ralph Progress Log
+Started: Mon Jan 19 01:26:29 CET 2026
+
+## Codebase Patterns
+- GitHub Actions workflows go in `.github/workflows/` directory
+- Commit messages follow pattern: `feat: [US-XXX] - Story Title`
+- Project has no package.json or Makefile - no standard quality check commands
+- YAML validation can be done with Python's yaml module or similar tools
+
+---
+
+## 2026-01-19 01:30:55 - US-001
+- What was implemented:
+  - Created `.github/workflows/docker-publish.yml` workflow file
+  - Workflow triggers on: push to main branch, version tags (v*.*.*), and workflow_dispatch
+  - Named "Build and Publish Docker Image" with job "Build and Push Docker Image"
+  - Includes checkout step using actions/checkout@v4
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (new file)
+- **Learnings for future iterations:**
+  - The Write tool can create parent directories automatically
+  - No built-in linting tools in this project - YAML validation requires external tools
+  - Workflow structure: name, on (triggers), jobs with steps
+---
+
+## 2026-01-19 - US-002
+- What was implemented:
+  - Added GHCR authentication to the workflow using docker/login-action@v3
+  - Set permissions (contents: read, packages: write) at job level
+  - Created environment variables for REGISTRY (ghcr.io) and IMAGE_NAME (${{ github.repository }})
+  - Added docker/build-push-action@v5 for building and pushing images
+  - Image pushed to ghcr.io/${{ github.repository }} namespace
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - docker/login-action@v3 is the standard way to authenticate to GHCR
+  - GITHUB_TOKEN is accessed via secrets.GITHUB_TOKEN
+  - Use env vars at workflow level for reusable values like registry URL and image name
+  - Permissions should be set at job level when using GITHUB_TOKEN for packages
+---
+
+## 2026-01-19 - US-003
+- What was implemented:
+  - Added docker/metadata-action@v5 to generate dynamic image tags and labels
+  - Configured tagging strategy:
+    - `type=raw,value=latest,enable={{is_default_branch}}` for :latest tag on main
+    - `type=sha,prefix=sha-,format=short` for :sha-<short-sha> tag on all builds
+    - `type=semver,pattern={{version}}` for :1.2.3 tag on version tags
+    - `type=semver,pattern={{major}}.{{minor}}` for :1.2 tag on version tags
+    - `type=semver,pattern={{major}}` for :1 tag on version tags
+  - Added OCI labels: title, description (created date and revision are auto-added by metadata-action)
+  - Updated build-push-action to use `${{ steps.meta.outputs.tags }}` and `${{ steps.meta.outputs.labels }}`
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - docker/metadata-action@v5 auto-generates OCI labels like created date, revision, source, etc.
+  - Use `id: meta` on the step to reference outputs in later steps via `${{ steps.meta.outputs.tags }}`
+  - `{{is_default_branch}}` is a built-in template for detecting pushes to main/master
+  - `type=sha` with `format=short` produces 7-character SHA prefixed with chosen prefix
+  - `type=semver` patterns are only applied when a semver tag triggers the workflow
+---
+
+## 2026-01-19 - US-004
+- What was implemented:
+  - Updated Dockerfile to support multi-architecture builds using TARGETARCH
+  - Added `ARG TARGETARCH` declaration for Docker BuildKit automatic variable
+  - Changed hardcoded `yq_linux_amd64` to `yq_linux_${TARGETARCH}`
+  - Validated Dockerfile with hadolint (passes without errors)
+- Files changed:
+  - `Dockerfile` (modified)
+- **Learnings for future iterations:**
+  - `TARGETARCH` is automatically set by Docker BuildKit to either `amd64` or `arm64`
+  - Declare `ARG TARGETARCH` before using it in the same build stage
+  - yq releases follow naming pattern: `yq_linux_<arch>` where arch is amd64 or arm64
+  - hadolint can be run via Docker: `cat Dockerfile | docker run --rm -i hadolint/hadolint`
+  - Docker build commands with `--platform` require QEMU setup for cross-platform emulation
+---
+
+## 2026-01-19 - US-005
+- What was implemented:
+  - Added docker/setup-qemu-action@v3 for cross-platform emulation support
+  - Added docker/setup-buildx-action@v3 for Docker BuildKit builder
+  - Configured build-push-action with `platforms: linux/amd64,linux/arm64`
+  - This creates a single manifest list containing both architectures
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - docker/setup-qemu-action@v3 must be added before docker/setup-buildx-action@v3
+  - `platforms: linux/amd64,linux/arm64` in build-push-action creates multi-arch manifest
+  - QEMU provides emulation layer for cross-platform builds on GitHub Actions runners
+  - Docker Buildx is required for multi-platform builds (standard docker build doesn't support it)
+---
+
+## 2026-01-19 - US-006
+- What was implemented:
+  - Added registry-based build caching to the workflow
+  - Configured `cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache`
+  - Configured `cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max`
+  - Cache uses separate `:buildcache` tag to avoid polluting release tags
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - `cache-from` and `cache-to` are parameters of docker/build-push-action
+  - `type=registry` stores cache in the container registry itself
+  - `mode=max` caches all layers (not just final image layers) for maximum cache efficiency
+  - Using a separate tag like `:buildcache` keeps cache separate from versioned images
+  - The ref uses same image name but different tag to stay in same namespace
+---
+
+## 2026-01-19 - US-007
+- What was implemented:
+  - Added Trivy vulnerability scanning to the GitHub Actions workflow
+  - Generates SARIF report for GitHub Security tab integration
+  - Upload SARIF results using github/codeql-action/upload-sarif@v3
+  - Added step to log HIGH vulnerabilities as warnings (exit-code: 0)
+  - Added step to fail build on CRITICAL vulnerabilities (exit-code: 1)
+  - Added security-events: write permission to job for SARIF upload
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - aquasecurity/trivy-action@master scans container images for vulnerabilities
+  - Use separate steps for SARIF generation and table output for different purposes
+  - SARIF upload requires `security-events: write` permission in the job
+  - `exit-code: '1'` makes the step fail if vulnerabilities matching severity are found
+  - `exit-code: '0'` allows the step to pass while still logging vulnerabilities
+  - Use image tag with SHA (e.g., sha-abc1234) to reference the built image for scanning
+---
+
+## 2026-01-19 - US-008
+- What was implemented:
+  - Added workflow status badge to the top of README.md
+  - Badge uses GitHub Actions badge.svg format for dynamic status display
+  - Badge links to the Actions workflow runs page
+  - Badge references the correct workflow file path (docker-publish.yml)
+- Files changed:
+  - `README.md` (modified)
+- **Learnings for future iterations:**
+  - GitHub Actions badge format: `![Name](https://github.com/OWNER/REPO/actions/workflows/WORKFLOW.yml/badge.svg)`
+  - Badge link format: `https://github.com/OWNER/REPO/actions/workflows/WORKFLOW.yml`
+  - Badge automatically shows current passing/failing status
+  - Place badges immediately after the main heading for visibility
+---
