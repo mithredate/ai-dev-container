@@ -4,6 +4,7 @@
 #   1. claude: The main Claude Code container (built from local Dockerfile)
 #   2. golang: A Go sidecar container for running go commands via bridge
 #   3. socket-proxy: Docker socket proxy for secure, limited Docker access
+#   4. viewer: Claude Code Viewer web UI for monitoring sessions
 #
 # Usage:
 #   docker compose up -d      # Start all services
@@ -79,6 +80,21 @@ services:
       # Mount current project directory (same as claude container)
       - .:/workspace
     working_dir: /workspace
+
+  # Claude Code Viewer - web UI for monitoring Claude sessions
+  viewer:
+    image: node:20-alpine
+    container_name: ai-dev-container-viewer
+    command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
+    environment:
+      # Port for the viewer service
+      - PORT=${VIEWER_PORT:-3000}
+    ports:
+      - "${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}"
+    volumes:
+      # Mount claude-config volume to access session logs (npx runs as root)
+      - claude-config:/root/.claude
+    restart: unless-stopped
 
 # Named volumes for persistent storage
 volumes:
