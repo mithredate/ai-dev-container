@@ -4,8 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-
-	_ "gopkg.in/yaml.v3"
 )
 
 const version = "0.1.0"
@@ -37,6 +35,13 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Load config
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		os.Exit(1)
+	}
+
 	args := flag.Args()
 	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "Error: no command specified")
@@ -44,7 +49,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: implement config parsing and command routing
+	// TODO: implement command routing (US-006)
+	_ = config // Config loaded successfully, routing not yet implemented
 	fmt.Fprintf(os.Stderr, "bridge: command routing not yet implemented\n")
 	os.Exit(1)
 }

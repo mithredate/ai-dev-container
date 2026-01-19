@@ -1,0 +1,105 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+	"os"
+
+	"gopkg.in/yaml.v3"
+)
+
+const (
+	defaultConfigPath = "/workspace/.claude/bridge.yaml"
+	exampleConfigPath = "examples/claude-bridge.yaml"
+)
+
+// Config represents the bridge configuration file.
+type Config struct {
+	Version          string             `yaml:"version"`
+	DefaultContainer string             `yaml:"default_container"`
+	Containers       map[string]string  `yaml:"containers"`
+	Commands         map[string]Command `yaml:"commands"`
+}
+
+// Command represents a command mapping configuration.
+type Command struct {
+	Container string `yaml:"container"`
+	Exec      string `yaml:"exec"`
+	Workdir   string `yaml:"workdir"`
+}
+
+// LoadConfig reads and parses the bridge configuration file.
+// It uses BRIDGE_CONFIG env var if set, otherwise uses the default path.
+func LoadConfig(configPath string) (*Config, error) {
+	// Determine config path
+	path := configPath
+	if path == "" {
+		path = os.Getenv("BRIDGE_CONFIG")
+	}
+	if path == "" {
+		path = defaultConfigPath
+	}
+
+	// Read config file
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil, fmt.Errorf("config file not found: %s\nSee %s for an example configuration", path, exampleConfigPath)
+		}
+		return nil, fmt.Errorf("failed to read config file %s: %w", path, err)
+	}
+
+	// Parse YAML
+	var config Config
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		var yamlErr *yaml.TypeError
+		if errors.As(err, &yamlErr) {
+			return nil, fmt.Errorf("invalid YAML in %s: %s", path, yamlErr.Errors[0])
+		}
+		return nil, fmt.Errorf("invalid YAML in %s: %w", path, err)
+	}
+
+	// Validate config
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid config in %s: %w", path, err)
+	}
+
+	return &config, nil
+}
+
+// Validate checks that the config has all required fields.
+func (c *Config) Validate() error {
+	if c.Version == "" {
+		return fmt.Errorf("missing required field 'version'")
+	}
+	if c.Version != "1" {
+		return fmt.Errorf("unsupported config version '%s', expected '1'", c.Version)
+	}
+	if len(c.Commands) == 0 {
+		return fmt.Errorf("missing required field 'commands' (must have at least one command)")
+	}
+
+	// Validate each command
+	for name, cmd := range c.Commands {
+		if cmd.Container == "" {
+			return fmt.Errorf("command '%s': missing required field 'container'", name)
+		}
+		if cmd.Exec == "" {
+			return fmt.Errorf("command '%s': missing required field 'exec'", name)
+		}
+	}
+
+	return nil
+}
+
+// ResolveContainer resolves a logical container name to the actual container name.
+// If the name is in the containers map, returns the mapped value.
+// Otherwise, returns the original name unchanged.
+func (c *Config) ResolveContainer(name string) string {
+	if c.Containers != nil {
+		if resolved, ok := c.Containers[name]; ok {
+			return resolved
+		}
+	}
+	return name
+}
