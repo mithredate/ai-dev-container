@@ -77,3 +77,20 @@ Thread: N/A
   - Translation functions return original input unchanged when no mappings - allows optional configuration
 ---
 
+## 2026-01-19 - US-006
+Thread: N/A
+- Implemented command routing in Go bridge with `runCommand` function
+- Routes commands based on config.Commands lookup, falls back to default_container
+- Executes via `docker exec -i` with container name resolution
+- Supports `workdir` option: adds `-w` flag to docker exec
+- Supports `exec` option: maps command alias to actual executable
+- Applies path translation to arguments using TranslateArgs
+- Proper error handling: unknown commands without default produce clear error
+- Exit code propagation from docker exec via exec.ExitError
+- Files changed: `cmd/bridge/main.go` (modified)
+- **Learnings for future iterations:**
+  - Use `os/exec` package for subprocess execution in Go
+  - `exec.ExitError` type assertion extracts exit codes from failed commands
+  - Connect stdin/stdout/stderr directly to subprocess for real-time streaming
+---
+
