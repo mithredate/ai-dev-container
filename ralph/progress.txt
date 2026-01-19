@@ -11,6 +11,16 @@ Started: Mon Jan 19 2026
 - Docker image size ~359MB due to: node:20-alpine (144MB) + docker-cli (31MB) + claude-code (87MB)
 - Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
 - Node/npm/npx wrappers use CLAUDE_STARTING=1 env var to allow Claude Code startup with native node, then route subsequent calls through bridge
+- Use named Docker volumes for credential storage instead of bind mounts (more portable across UID mismatches)
 
+---
+
+## 2026-01-19 - US-001
+- What was implemented: Replaced bind mount with named Docker volume for Claude credentials
+- Files changed: compose.yaml
+- **Learnings for future iterations:**
+  - Docker named volumes use `<project>_<volumename>` naming convention (e.g., ai-dev-container_claude-config)
+  - Named volumes persist after `docker compose down` - only removed with `docker compose down -v` or `docker volume rm`
+  - For credential storage, named volumes are more secure than bind mounts as they don't require host path permissions
 ---
 

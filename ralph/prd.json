@@ -15,7 +15,7 @@
         "Volume is created with project-prefixed name (e.g., ai-dev-container_claude-config)"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
