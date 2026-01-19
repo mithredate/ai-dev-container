@@ -1,128 +1,194 @@
 {
   "project": "AI Dev Container",
-  "branchName": "ralph/ghcr-github-actions",
-  "description": "Push Container to GitHub Container Registry via GitHub Actions - automate building and publishing Docker container to GHCR with multi-platform support, semantic versioning, and security scanning",
+  "branchName": "ralph/claude-brain-sidecar-v2",
+  "description": "Claude Brain Sidecar v2 - Overhaul Docker image with auto-start Claude entrypoint, YOLO mode support, and Go-based bridge for sidecar container command execution",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Create GitHub Actions workflow file",
-      "description": "As a developer, I need a GitHub Actions workflow file that triggers on the correct events so that container builds happen automatically.",
+      "title": "Create entrypoint wrapper script",
+      "description": "As a user, I want the container to start Claude automatically so that I don't have to manually run it after entering the container.",
       "acceptanceCriteria": [
-        "Create .github/workflows/docker-publish.yml workflow file",
-        "Workflow triggers on push to main branch",
-        "Workflow triggers on push of version tags matching v*.*.* pattern",
-        "Workflow triggers on workflow_dispatch for manual runs",
-        "Workflow has appropriate name and job names for clarity",
-        "Workflow YAML syntax is valid (validated with yq or similar)"
+        "Create /scripts/entrypoint.sh wrapper script",
+        "Script runs 'claude' by default when container starts",
+        "Script is executable (chmod +x)",
+        "Typecheck passes"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-002",
-      "title": "Configure GHCR authentication",
-      "description": "As a developer, I need the workflow to authenticate with GHCR so that it can push images to the registry.",
+      "title": "Implement YOLO mode in entrypoint",
+      "description": "As a power user, I want to run Claude with minimal confirmation prompts so that I can automate workflows in isolated environments.",
       "acceptanceCriteria": [
-        "Workflow uses GITHUB_TOKEN for authentication (no manual secrets needed)",
-        "Login step uses docker/login-action with ghcr.io registry",
-        "Permissions are set correctly (contents: read, packages: write)",
-        "Image is pushed to ghcr.io/${{ github.repository }} namespace",
-        "Workflow YAML syntax is valid"
+        "When CLAUDE_YOLO=1 is set, entrypoint runs 'claude --dangerously-skip-permissions'",
+        "When CLAUDE_YOLO is unset or '0', entrypoint runs 'claude' (safe mode)",
+        "Entrypoint script logs which mode is being used to stderr",
+        "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Implement image tagging strategy",
-      "description": "As a developer, I want images tagged with multiple identifiers so that I can reference specific versions or always get the latest.",
+      "title": "Initialize Go module for bridge",
+      "description": "As a developer, I need a Go module structure so that I can build the bridge binary.",
       "acceptanceCriteria": [
-        "Use docker/metadata-action to generate tags",
-        "Push to main produces :latest tag",
-        "Push to main produces :sha-<short-sha> tag (e.g., sha-abc1234)",
-        "Push of v1.2.3 tag produces :1.2.3, :1.2, and :1 tags",
-        "Push of v1.2.3 tag also produces :sha-<short-sha> tag",
-        "All images include OCI labels (created date, revision, description)",
-        "Workflow YAML syntax is valid"
+        "Create /cmd/bridge/main.go with basic CLI skeleton",
+        "Create /go.mod with module path github.com/mithredate/ai-dev-container",
+        "Add dependency on gopkg.in/yaml.v3 for config parsing",
+        "'go build ./cmd/bridge' compiles successfully",
+        "Binary shows help text when run with --help",
+        "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-004",
-      "title": "Update Dockerfile for multi-arch compatibility",
-      "description": "As a developer, I need the Dockerfile to support multi-architecture builds so that the same Dockerfile works for both AMD64 and ARM64.",
+      "title": "Implement config parsing in Go bridge",
+      "description": "As a user, I want the Go bridge to read my bridge.yaml configuration so that commands route to the correct containers.",
       "acceptanceCriteria": [
-        "Replace hardcoded yq_linux_amd64 with architecture-aware download using TARGETARCH",
-        "Use TARGETARCH build argument to select correct binary",
-        "Dockerfile lint passes (hadolint)",
-        "Build succeeds for linux/amd64 target",
-        "Build succeeds for linux/arm64 target"
+        "Bridge reads config from /workspace/.claude/bridge.yaml by default",
+        "Bridge supports BRIDGE_CONFIG env var to override config path",
+        "Config schema supports: version, default_container, containers, commands",
+        "Invalid YAML produces clear error message with line number",
+        "Missing required fields produce specific error messages",
+        "Missing config file produces error with example config path",
+        "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-005",
-      "title": "Configure multi-platform builds in workflow",
-      "description": "As a developer, I want the container built for both AMD64 and ARM64 architectures so that it runs natively on Intel/AMD and Apple Silicon machines.",
+      "title": "Implement path mapping in Go bridge",
+      "description": "As a user, I want the bridge to translate file paths between Claude's workspace and container working directories so that file references work correctly.",
       "acceptanceCriteria": [
-        "Use docker/setup-qemu-action for cross-platform emulation",
-        "Use docker/setup-buildx-action for BuildKit builder",
-        "Build targets both linux/amd64 and linux/arm64 platforms",
-        "Single manifest list created containing both architectures",
-        "Workflow YAML syntax is valid"
+        "Config schema supports 'paths' section for path mappings",
+        "Path translation applied to command arguments containing mapped prefixes",
+        "Path translation is optional (works without 'paths' section)",
+        "Multiple path mappings supported per container",
+        "Typecheck passes"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-006",
-      "title": "Implement registry-based build caching",
-      "description": "As a developer, I want builds to use GHCR-based caching so that subsequent builds are faster.",
+      "title": "Implement command routing in Go bridge",
+      "description": "As a user, I want the bridge to execute commands in the correct sidecar container based on my configuration.",
       "acceptanceCriteria": [
-        "Configure cache-from with type=registry pointing to cache image",
-        "Configure cache-to with type=registry,mode=max for maximum cache layers",
-        "Cache image uses separate tag (e.g., buildcache) to avoid polluting release tags",
-        "Workflow YAML syntax is valid"
+        "'bridge <command> [args...]' executes command in configured container",
+        "Uses 'docker exec' to run commands in target container",
+        "Supports 'workdir' option to set working directory in container",
+        "Supports 'exec' option to map command alias to actual command",
+        "Unrecognized commands use 'default_container' if configured",
+        "Unrecognized commands without default produce clear error",
+        "Container name resolution uses 'containers' section overrides",
+        "Typecheck passes"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-007",
-      "title": "Add security scanning with Trivy",
-      "description": "As a developer, I want images scanned for vulnerabilities before push so that we don't publish containers with critical security issues.",
+      "title": "Implement real-time output streaming",
+      "description": "As a user, I want to see command output in real-time so that I can monitor long-running operations like test suites or package installations.",
       "acceptanceCriteria": [
-        "Use aquasecurity/trivy-action to scan the built image",
-        "Scan runs after build but results uploaded to GitHub Security tab",
-        "Workflow fails if CRITICAL vulnerabilities are found (exit-code: 1)",
-        "Scan results uploaded as SARIF to GitHub Security tab",
-        "HIGH vulnerabilities logged as warnings but don't fail the build",
-        "Workflow YAML syntax is valid"
+        "stdout from docker exec streams to bridge stdout in real-time",
+        "stderr from docker exec streams to bridge stderr in real-time",
+        "No buffering of output (visible as commands produce it)",
+        "TTY allocated when bridge is run in a terminal (for colored output)",
+        "Typecheck passes"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-008",
-      "title": "Add workflow status badge to README",
-      "description": "As a user viewing the repository, I want to see the build status so that I know if the latest image is healthy.",
+      "title": "Implement exit code propagation",
+      "description": "As a user, I want the bridge to return the same exit code as the remote command so that scripts can detect failures.",
       "acceptanceCriteria": [
-        "Add workflow status badge to README.md at the top",
-        "Badge links to the Actions workflow runs",
-        "Badge shows current status (passing/failing)",
-        "Badge uses correct workflow file path reference"
+        "Bridge exits with same code as the docker exec command",
+        "Exit code 0 when command succeeds",
+        "Non-zero exit code when command fails",
+        "Exit code 1 when bridge itself fails (config error, docker error)",
+        "Typecheck passes"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-009",
+      "title": "Update Dockerfile for Go multi-stage build",
+      "description": "As a developer, I need the Dockerfile to compile the Go bridge and include it in the final image.",
+      "acceptanceCriteria": [
+        "Add Go builder stage using golang:1.22-alpine",
+        "Compile bridge with CGO_ENABLED=0 for static binary",
+        "Copy bridge binary to /usr/local/bin/bridge in runtime stage",
+        "Remove yq binary and wget from builder stage",
+        "Remove /scripts/bridge shell script if it exists",
+        "Dockerfile uses ENTRYPOINT [\"/scripts/entrypoint.sh\"]",
+        "Remove CMD [\"sh\"] from Dockerfile",
+        "'docker build' completes successfully",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-010",
+      "title": "Verify image size under 150MB",
+      "description": "As a developer, I want to ensure the final image size remains under 150MB.",
+      "acceptanceCriteria": [
+        "Build the Docker image successfully",
+        "Verify image size is under 150MB using 'docker images'",
+        "Verify yq is not present in final image",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-011",
+      "title": "Update examples with path mapping",
+      "description": "As a user reading the documentation, I want to see how to configure path mapping so that I can set it up for my project.",
+      "acceptanceCriteria": [
+        "Update examples/claude-bridge.yaml with 'paths' section example",
+        "Show mapping from /workspace to container-specific paths",
+        "Include comments explaining when path mapping is needed",
+        "Example demonstrates PHP container with /var/www/html mapping",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-012",
+      "title": "Update documentation",
+      "description": "As a user, I want updated documentation reflecting the new entrypoint and Go bridge so that I can use the image correctly.",
+      "acceptanceCriteria": [
+        "Update README.md with new 'docker run' usage (no manual claude start)",
+        "Document YOLO mode with security warnings",
+        "Update bridge configuration docs for path mapping feature",
+        "Remove references to yq dependency",
+        "Update 'Building the Image' section to mention Go compilation",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": false,
       "notes": ""
     }
   ]
