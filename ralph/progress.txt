@@ -42,3 +42,14 @@ Started: Mon Jan 19 2026
   - ENV variables in Dockerfile are available to all processes in the container, not just the entrypoint
 ---
 
+## 2026-01-19 - US-002
+- What was implemented: Updated README with first-run authentication instructions using Docker named volumes
+- Files changed: README.md
+- **Learnings for future iterations:**
+  - Replaced the "Session Persistence" section which incorrectly suggested bind-mounting ~/.claude from host
+  - New "Authentication" section documents the per-project Docker volume approach
+  - First-run workflow: `docker compose up -d` then `docker attach <container>` then follow Claude init prompts
+  - Users can detach without stopping container using Ctrl+P Ctrl+Q
+  - Volume naming follows Docker Compose convention: `<project>_<volumename>` (e.g., ai-dev-container_claude-config)
+---
+
