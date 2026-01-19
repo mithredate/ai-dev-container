@@ -19,9 +19,11 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/bridge ./cmd/bridg
 FROM node:20-alpine AS runtime
 
 # Install only essential runtime dependencies:
+# - bash: Required by Claude Code CLI for shell execution
 # - docker-cli: Docker client for container communication (no daemon)
+# - git: Required for Claude Code version control operations
 # Multi-stage build ensures Go compiler and build tools are not included
-RUN apk add --no-cache docker-cli=29.1.3-r1 && \
+RUN apk add --no-cache bash docker-cli=29.1.3-r1 git && \
     rm -rf /var/cache/apk/*
 
 # Install claude-code CLI globally and clean npm artifacts
@@ -46,6 +48,9 @@ ENV PATH="/scripts/wrappers:$PATH"
 
 # Configure Docker host (override via docker-compose or runtime env)
 ENV DOCKER_HOST=""
+
+# Set SHELL env var for Claude Code's Bash tool
+ENV SHELL=/bin/bash
 
 # Create non-root user 'claude' with session directory
 # Note: node:20-alpine already has node user/group at 1000, so we use 1001

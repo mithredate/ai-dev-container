@@ -60,7 +60,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "═══════════════════════════════════════════════════════"
 
   # Run amp with the ralph prompt
-  OUTPUT=$(cat "$SCRIPT_DIR/claude.prompt.md" | claude 2>&1 | tee /dev/stderr) || true
+  OUTPUT=$(cat "$SCRIPT_DIR/claude.prompt.md" | docker compose exec -T -e CLAUDE_STARTING=1 claude claude 2>&1 | tee /dev/stderr) || true
 
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
