@@ -192,17 +192,106 @@
     },
     {
       "id": "US-013",
-      "title": "Update documentation",
+      "title": "Update documentation (superseded)",
       "description": "As a user, I want updated documentation reflecting the new entrypoint and Go bridge so that I can use the image correctly.",
       "acceptanceCriteria": [
-        "Update README.md with new 'docker run' usage (no manual claude start)",
-        "Document YOLO mode with security warnings",
-        "Update bridge configuration docs for path mapping feature",
-        "Remove references to yq dependency",
-        "Update 'Building the Image' section to mention Go compilation",
-        "Typecheck passes"
+        "Superseded by US-018 which has expanded scope"
       ],
       "priority": 13,
+      "passes": true,
+      "notes": "Superseded by US-018 - expanded documentation story with wrapper and compose docs"
+    },
+    {
+      "id": "US-014",
+      "title": "Add socket-proxy to compose.yaml",
+      "description": "As a user, I want the compose setup to use a socket proxy so that Docker operations are secure and limited to exec only.",
+      "acceptanceCriteria": [
+        "compose.yaml includes tecnativa/docker-socket-proxy service",
+        "Socket-proxy allows only CONTAINERS=1, EXEC=1, POST=1",
+        "Claude service uses DOCKER_HOST: tcp://socket-proxy:2375",
+        "Docker socket mounted read-only to socket-proxy only",
+        "Claude service no longer mounts docker.sock directly",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create command wrapper scripts",
+      "description": "As a user, I want common commands (go, php, node, etc.) to automatically route through the bridge so that Claude can use them naturally without special syntax.",
+      "acceptanceCriteria": [
+        "Create wrapper scripts in /scripts/wrappers/ for: go, gofmt, php, composer, node, npm, npx",
+        "Each wrapper calls bridge <command> with all arguments",
+        "Wrappers check BRIDGE_ENABLED=1 env var; if not set, execute command locally (passthrough)",
+        "Wrappers have executable permissions (chmod +x)",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Update Dockerfile for wrappers",
+      "description": "As a developer, I need the Dockerfile to include the wrapper scripts so they're available in the final image.",
+      "acceptanceCriteria": [
+        "Dockerfile copies wrapper scripts from /scripts/wrappers/ to /usr/local/bin/",
+        "Wrappers are placed AFTER any package-installed binaries (to take precedence in PATH)",
+        "Docker build completes successfully",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-017",
+      "title": "Update bridge.yaml and compose.yaml with BRIDGE_ENABLED",
+      "description": "As a developer working on ai-dev-container, I need the project's configuration files updated for the new wrapper system.",
+      "acceptanceCriteria": [
+        ".claude/bridge.yaml container name matches compose.yaml (ai-dev-container-golang)",
+        "Command key names match wrapper script names (go, gofmt)",
+        "compose.yaml sets BRIDGE_ENABLED=1 for claude service",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-018",
+      "title": "Update documentation (README.md)",
+      "description": "As a user, I want updated documentation so I understand how to use the new entrypoint, YOLO mode, and bridge configuration.",
+      "acceptanceCriteria": [
+        "README documents new docker compose up usage (no manual claude start needed)",
+        "README documents YOLO mode with security warnings",
+        "README documents bridge.yaml key name convention (go, php, node, npm, composer, npx, gofmt)",
+        "README documents BRIDGE_ENABLED env var for passthrough mode",
+        "README removes references to yq dependency",
+        "README mentions Go compilation in Building the Image section",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-019",
+      "title": "Verify setup works end-to-end",
+      "description": "As a developer, I want to verify the compose setup works by running commands inside the container.",
+      "acceptanceCriteria": [
+        "docker compose up -d starts all services successfully",
+        "docker compose exec claude bridge go version returns Go version from golang container",
+        "docker compose exec claude go version (via wrapper) returns same Go version",
+        "Create a test file: echo test > /workspace/test-output.txt",
+        "Verify test file exists on host filesystem",
+        "Clean up: remove test file",
+        "docker compose down stops all services",
+        "Typecheck passes"
+      ],
+      "priority": 19,
       "passes": false,
       "notes": ""
     }
