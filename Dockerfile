@@ -37,7 +37,9 @@ COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
 
 # Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
 # These scripts route commands through the bridge when BRIDGE_ENABLED=1
-COPY --chmod=755 scripts/wrappers/ /scripts/wrappers/
+# Only copy wrappers for commands that don't conflict with base image binaries (node, npm, npx)
+# Node-based commands are used by Claude Code itself and must not be wrapped
+COPY --chmod=755 scripts/wrappers/go scripts/wrappers/gofmt /scripts/wrappers/
 
 # Prepend wrappers directory to PATH so wrappers take precedence
 ENV PATH="/scripts/wrappers:$PATH"
