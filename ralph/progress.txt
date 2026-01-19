@@ -184,3 +184,23 @@
   - Warning messages are more effective with concrete "WRONG vs CORRECT" examples
   - The CLAUDE.md.template "Do Not" section is the right place for multi-container security warnings
 ---
+
+## 2026-01-19 - US-015
+- What was implemented: Final image size optimization for Claude-Brain Sidecar Docker image
+- Files changed:
+  - Dockerfile (optimized - combined RUN layers, added cleanup steps, used COPY --chmod)
+- **Optimizations applied:**
+  - Combined builder stage RUN commands to reduce layers (wget + yq download in single RUN)
+  - Added explicit `rm -rf /var/cache/apk/*` and `rm -rf /tmp/*` cleanup after package installs
+  - Used `COPY --chmod=755` for bridge script to eliminate separate chmod RUN layer
+  - Improved comments documenting multi-stage build purpose and what stays in final image
+- **Size verification:**
+  - Final image content size: 98.1MB (target was < 150MB) ✓
+  - Multi-stage build successfully excludes wget from runtime stage
+  - Only essential packages in runtime: docker-cli, node.js, claude-code, yq, bridge script
+- **Learnings for future iterations:**
+  - COPY --chmod is a Docker BuildKit feature that combines copy and permission setting in one layer
+  - `--no-cache` alone may not clear all apk artifacts; explicit `rm -rf /var/cache/apk/*` is recommended
+  - Content size (98.1MB) is more meaningful than disk usage (374MB) for image portability
+  - node:20-alpine base is ~49MB, so 49MB overhead for tooling is reasonable
+---
