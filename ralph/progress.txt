@@ -62,3 +62,18 @@ Thread: N/A
   - Config validation should be a separate method for reusability
 ---
 
+## 2026-01-19 - US-005
+Thread: N/A
+- Implemented path mapping in Go bridge
+- Added `Paths` field (map[string]string) to Command struct for path mappings
+- Implemented `TranslatePath(path string) string` - translates single path using longest prefix match
+- Implemented `TranslateArgs(args []string) []string` - translates all arguments with mapped prefixes
+- Path translation is optional (returns unchanged if no paths configured)
+- Longest prefix matching ensures nested path mappings work correctly
+- Files changed: `cmd/bridge/config.go` (modified)
+- **Learnings for future iterations:**
+  - Go staticcheck warns about redundant nil checks: `len(nil_map)` returns 0, so `len(m) == 0` covers both nil and empty cases
+  - Use longest prefix matching for path translation to handle nested paths correctly
+  - Translation functions return original input unchanged when no mappings - allows optional configuration
+---
+
