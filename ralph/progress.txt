@@ -5,6 +5,8 @@ Started: Mon Jan 19 2026
 - Use `COPY --chmod=755` in Dockerfile to set script permissions in a single layer
 - Shell scripts use `#!/bin/sh` with `shellcheck shell=dash` directive for POSIX compatibility
 - Scripts log to stderr with a prefix like `[scriptname]` for visibility
+- Go module: `github.com/mithredate/ai-dev-container`, use `go build ./cmd/bridge` to build
+- Go CLI uses standard library `flag` package for argument parsing
 
 ---
 
@@ -29,5 +31,18 @@ Thread: N/A
 - **Learnings for future iterations:**
   - POSIX shell uses `[ "$VAR" = "1" ]` for string comparison (not `==`)
   - Use `sh -n script.sh` to verify shell script syntax without executing
+---
+
+## 2026-01-19 - US-003
+Thread: N/A
+- Initialized Go module with `go.mod` and `go.sum`
+- Created `cmd/bridge/main.go` with CLI skeleton using standard library `flag` package
+- Added `gopkg.in/yaml.v3` dependency for future config parsing
+- Implemented `--help`, `-h`, `--version`, `-v`, and `--config` flags
+- Files changed: `go.mod` (new), `go.sum` (new), `cmd/bridge/main.go` (new)
+- **Learnings for future iterations:**
+  - Use `go mod tidy` to generate go.sum after adding dependencies
+  - Use blank import `_ "gopkg.in/yaml.v3"` to ensure dependency is included in go.mod even if not yet used
+  - Custom `flag.Usage` function provides better help formatting than default
 ---
 
