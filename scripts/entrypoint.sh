@@ -13,10 +13,14 @@ log() {
 
 # Main entry point
 main() {
-    log "Starting Claude CLI..."
-
-    # Execute Claude CLI
-    exec claude "$@"
+    # Check for YOLO mode (skip all permission prompts)
+    if [ "$CLAUDE_YOLO" = "1" ]; then
+        log "Starting Claude CLI in YOLO mode (--dangerously-skip-permissions)..."
+        exec claude --dangerously-skip-permissions "$@"
+    else
+        log "Starting Claude CLI in safe mode..."
+        exec claude "$@"
+    fi
 }
 
 main "$@"
