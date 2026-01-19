@@ -1,299 +1,50 @@
 {
   "project": "AI Dev Container",
-  "branchName": "ralph/claude-brain-sidecar-v2",
-  "description": "Claude Brain Sidecar v2 - Overhaul Docker image with auto-start Claude entrypoint, YOLO mode support, and Go-based bridge for sidecar container command execution",
+  "branchName": "ralph/docker-volume-auth",
+  "description": "Docker Volume for Claude Authentication - Replace insecure bind mount with named Docker volume for per-project credential storage",
   "userStories": [
     {
       "id": "US-001",
-      "title": "Create entrypoint wrapper script",
-      "description": "As a user, I want the container to start Claude automatically so that I don't have to manually run it after entering the container.",
+      "title": "Replace bind mount with named volume in compose.yaml",
+      "description": "As a developer, I want Claude credentials stored in a Docker volume so that authentication works regardless of host UID.",
       "acceptanceCriteria": [
-        "Create /scripts/entrypoint.sh wrapper script",
-        "Script runs 'claude' by default when container starts",
-        "Script is executable (chmod +x)",
-        "Typecheck passes"
+        "Remove ~/.claude:/home/claude/.claude bind mount from compose.yaml",
+        "Add named volume 'claude-config' mapped to /home/claude/.claude",
+        "Define 'claude-config' in the volumes: section of compose.yaml",
+        "Container starts successfully with docker compose up -d",
+        "Volume is created with project-prefixed name (e.g., ai-dev-container_claude-config)"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-002",
-      "title": "Implement YOLO mode in entrypoint",
-      "description": "As a power user, I want to run Claude with minimal confirmation prompts so that I can automate workflows in isolated environments.",
+      "title": "Update README with first-run authentication instructions",
+      "description": "As a new user, I want clear instructions on how to authenticate Claude on first run so I can get started quickly.",
       "acceptanceCriteria": [
-        "When CLAUDE_YOLO=1 is set, entrypoint runs 'claude --dangerously-skip-permissions'",
-        "When CLAUDE_YOLO is unset or '0', entrypoint runs 'claude' (safe mode)",
-        "Entrypoint script logs which mode is being used to stderr",
-        "Typecheck passes"
+        "README explains that authentication is per-project and stored in a Docker volume",
+        "README documents the first-run workflow: docker compose up -d then docker attach claude",
+        "README explains that Claude's init script will guide through setup (colors, auth, etc.)",
+        "README notes that subsequent runs will use cached credentials from the volume",
+        "Remove any references to mounting ~/.claude from host"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
       "id": "US-003",
-      "title": "Initialize Go module for bridge",
-      "description": "As a developer, I need a Go module structure so that I can build the bridge binary.",
+      "title": "Document re-authentication process",
+      "description": "As a user who needs to re-authenticate, I want to know how to reset my credentials.",
       "acceptanceCriteria": [
-        "Create /cmd/bridge/main.go with basic CLI skeleton",
-        "Create /go.mod with module path github.com/mithredate/ai-dev-container",
-        "Add dependency on gopkg.in/yaml.v3 for config parsing",
-        "'go build ./cmd/bridge' compiles successfully",
-        "Binary shows help text when run with --help",
-        "Typecheck passes"
+        "README documents how to delete the volume to force re-authentication",
+        "Command provided: docker volume rm <project>_claude-config",
+        "Notes that this will require going through Claude init again"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
-    },
-    {
-      "id": "US-004",
-      "title": "Implement config parsing in Go bridge",
-      "description": "As a user, I want the Go bridge to read my bridge.yaml configuration so that commands route to the correct containers.",
-      "acceptanceCriteria": [
-        "Bridge reads config from /workspace/.claude/bridge.yaml by default",
-        "Bridge supports BRIDGE_CONFIG env var to override config path",
-        "Config schema supports: version, default_container, containers, commands",
-        "Invalid YAML produces clear error message with line number",
-        "Missing required fields produce specific error messages",
-        "Missing config file produces error with example config path",
-        "Typecheck passes"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-005",
-      "title": "Implement path mapping in Go bridge",
-      "description": "As a user, I want the bridge to translate file paths between Claude's workspace and container working directories so that file references work correctly.",
-      "acceptanceCriteria": [
-        "Config schema supports 'paths' section for path mappings",
-        "Path translation applied to command arguments containing mapped prefixes",
-        "Path translation is optional (works without 'paths' section)",
-        "Multiple path mappings supported per container",
-        "Typecheck passes"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-006",
-      "title": "Implement command routing in Go bridge",
-      "description": "As a user, I want the bridge to execute commands in the correct sidecar container based on my configuration.",
-      "acceptanceCriteria": [
-        "'bridge <command> [args...]' executes command in configured container",
-        "Uses 'docker exec' to run commands in target container",
-        "Supports 'workdir' option to set working directory in container",
-        "Supports 'exec' option to map command alias to actual command",
-        "Unrecognized commands use 'default_container' if configured",
-        "Unrecognized commands without default produce clear error",
-        "Container name resolution uses 'containers' section overrides",
-        "Typecheck passes"
-      ],
-      "priority": 6,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-007",
-      "title": "Implement real-time output streaming",
-      "description": "As a user, I want to see command output in real-time so that I can monitor long-running operations like test suites or package installations.",
-      "acceptanceCriteria": [
-        "stdout from docker exec streams to bridge stdout in real-time",
-        "stderr from docker exec streams to bridge stderr in real-time",
-        "No buffering of output (visible as commands produce it)",
-        "TTY allocated when bridge is run in a terminal (for colored output)",
-        "Typecheck passes"
-      ],
-      "priority": 7,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-008",
-      "title": "Implement exit code propagation",
-      "description": "As a user, I want the bridge to return the same exit code as the remote command so that scripts can detect failures.",
-      "acceptanceCriteria": [
-        "Bridge exits with same code as the docker exec command",
-        "Exit code 0 when command succeeds",
-        "Non-zero exit code when command fails",
-        "Exit code 1 when bridge itself fails (config error, docker error)",
-        "Typecheck passes"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Implementation completed as part of US-006"
-    },
-    {
-      "id": "US-009",
-      "title": "Update Dockerfile for Go multi-stage build",
-      "description": "As a developer, I need the Dockerfile to compile the Go bridge and include it in the final image.",
-      "acceptanceCriteria": [
-        "Add Go builder stage using golang:1.22-alpine",
-        "Compile bridge with CGO_ENABLED=0 for static binary",
-        "Copy bridge binary to /usr/local/bin/bridge in runtime stage",
-        "Remove yq binary and wget from builder stage",
-        "Remove /scripts/bridge shell script if it exists",
-        "Dockerfile uses ENTRYPOINT [\"/scripts/entrypoint.sh\"]",
-        "Remove CMD [\"sh\"] from Dockerfile",
-        "'docker build' completes successfully",
-        "Typecheck passes"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Docker build tested - required fixing golang:1.22-alpine to golang:1.24-alpine to match go.mod requirements"
-    },
-    {
-      "id": "US-010",
-      "title": "Verify image size under 150MB",
-      "description": "As a developer, I want to ensure the final image size remains under 150MB.",
-      "acceptanceCriteria": [
-        "Build the Docker image successfully",
-        "Verify image size is under 400MB using 'docker images'",
-        "Verify yq is not present in final image",
-        "Typecheck passes"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": "Image size is 359MB (under 400MB target). Fixed Dockerfile golang:1.22->1.24 to match go.mod. Verified: build succeeds, yq removed, typecheck passes."
-    },
-    {
-      "id": "US-011",
-      "title": "Update examples with path mapping",
-      "description": "As a user reading the documentation, I want to see how to configure path mapping so that I can set it up for my project.",
-      "acceptanceCriteria": [
-        "Update examples/claude-bridge.yaml with 'paths' section example",
-        "Show mapping from /workspace to container-specific paths",
-        "Include comments explaining when path mapping is needed",
-        "Example demonstrates PHP container with /var/www/html mapping",
-        "Typecheck passes"
-      ],
-      "priority": 11,
-      "passes": true,
-      "notes": "Added paths section documentation and examples for PHP (/workspace → /var/www/html) and Node.js (/workspace → /app) containers with usage examples."
-    },
-    {
-      "id": "US-012",
-      "title": "Create docker compose v2 file for this project",
-      "description": "As a user, I want to use the ai-dev-container tool to implement other tasks using Claude code.",
-      "acceptanceCriteria": [
-        "There is a compose.yaml file with proper setup",
-        "There's a golang image in the compose.yaml file to run go commands",
-        "claude-bridge.yaml configuration exists to make the go commands available to the bridge",
-        "~/.claude directory is mounted",
-        "Typecheck passes"
-      ],
-      "priority": 12,
-      "passes": true,
-      "notes": "Created compose.yaml with claude and golang services. Created .claude/bridge.yaml for go command routing."
-    },
-    {
-      "id": "US-013",
-      "title": "Update documentation (superseded)",
-      "description": "As a user, I want updated documentation reflecting the new entrypoint and Go bridge so that I can use the image correctly.",
-      "acceptanceCriteria": [
-        "Superseded by US-018 which has expanded scope"
-      ],
-      "priority": 13,
-      "passes": true,
-      "notes": "Superseded by US-018 - expanded documentation story with wrapper and compose docs"
-    },
-    {
-      "id": "US-014",
-      "title": "Add socket-proxy to compose.yaml",
-      "description": "As a user, I want the compose setup to use a socket proxy so that Docker operations are secure and limited to exec only.",
-      "acceptanceCriteria": [
-        "compose.yaml includes tecnativa/docker-socket-proxy service",
-        "Socket-proxy allows only CONTAINERS=1, EXEC=1, POST=1",
-        "Claude service uses DOCKER_HOST: tcp://socket-proxy:2375",
-        "Docker socket mounted read-only to socket-proxy only",
-        "Claude service no longer mounts docker.sock directly",
-        "Typecheck passes"
-      ],
-      "priority": 14,
-      "passes": true,
-      "notes": "Added socket-proxy service with tecnativa/docker-socket-proxy. Configured with CONTAINERS=1, EXEC=1, POST=1. Docker socket mounted read-only to socket-proxy only. Claude service updated to use DOCKER_HOST=tcp://socket-proxy:2375."
-    },
-    {
-      "id": "US-015",
-      "title": "Create command wrapper scripts",
-      "description": "As a user, I want common commands (go, php, node, etc.) to automatically route through the bridge so that Claude can use them naturally without special syntax.",
-      "acceptanceCriteria": [
-        "Create wrapper scripts in /scripts/wrappers/ for: go, gofmt, php, composer, node, npm, npx",
-        "Each wrapper calls bridge <command> with all arguments",
-        "Wrappers check BRIDGE_ENABLED=1 env var; if not set, execute command locally (passthrough)",
-        "Wrappers have executable permissions (chmod +x)",
-        "Typecheck passes"
-      ],
-      "priority": 15,
-      "passes": true,
-      "notes": "Created 7 wrapper scripts in scripts/wrappers/ (go, gofmt, php, composer, node, npm, npx). Each checks BRIDGE_ENABLED=1 to route via bridge, otherwise falls back to local binary."
-    },
-    {
-      "id": "US-016",
-      "title": "Update Dockerfile for wrappers",
-      "description": "As a developer, I need the Dockerfile to include the wrapper scripts so they're available in the final image.",
-      "acceptanceCriteria": [
-        "Dockerfile copies wrapper scripts from /scripts/wrappers/ to /usr/local/bin/",
-        "Wrappers are placed AFTER any package-installed binaries (to take precedence in PATH)",
-        "Docker build completes successfully",
-        "Typecheck passes"
-      ],
-      "priority": 16,
-      "passes": true,
-      "notes": "Wrappers copied to /scripts/wrappers/ (not /usr/local/bin/) to avoid overwriting real binaries. PATH prepended with /scripts/wrappers to ensure wrapper precedence. Docker build and passthrough mode verified."
-    },
-    {
-      "id": "US-017",
-      "title": "Update bridge.yaml and compose.yaml with BRIDGE_ENABLED",
-      "description": "As a developer working on ai-dev-container, I need the project's configuration files updated for the new wrapper system.",
-      "acceptanceCriteria": [
-        ".claude/bridge.yaml container name matches compose.yaml (ai-dev-container-golang)",
-        "Command key names match wrapper script names (go, gofmt)",
-        "compose.yaml sets BRIDGE_ENABLED=1 for claude service",
-        "Typecheck passes"
-      ],
-      "priority": 17,
-      "passes": true,
-      "notes": "Verified bridge.yaml container name already matches compose.yaml (ai-dev-container-golang). Command keys (go, gofmt) already match wrapper scripts. Added BRIDGE_ENABLED=1 to claude service environment."
-    },
-    {
-      "id": "US-018",
-      "title": "Update documentation (README.md)",
-      "description": "As a user, I want updated documentation so I understand how to use the new entrypoint, YOLO mode, and bridge configuration.",
-      "acceptanceCriteria": [
-        "README documents new docker compose up usage (no manual claude start needed)",
-        "README documents YOLO mode with security warnings",
-        "README documents bridge.yaml key name convention (go, php, node, npm, composer, npx, gofmt)",
-        "README documents BRIDGE_ENABLED env var for passthrough mode",
-        "README removes references to yq dependency",
-        "README mentions Go compilation in Building the Image section",
-        "Typecheck passes"
-      ],
-      "priority": 18,
-      "passes": true,
-      "notes": "Updated Quick Start to use docker compose up with auto-start. Added BRIDGE_ENABLED and wrapper script documentation. Removed yq reference. Added Go multi-stage build documentation."
-    },
-    {
-      "id": "US-019",
-      "title": "Verify setup works end-to-end",
-      "description": "As a developer, I want to verify the compose setup works by running commands inside the container.",
-      "acceptanceCriteria": [
-        "docker compose up -d starts all services successfully",
-        "docker compose exec claude bridge go version returns Go version from golang container",
-        "docker compose exec claude go version (via wrapper) returns same Go version",
-        "Create a test file: echo test > /workspace/test-output.txt",
-        "Verify test file exists on host filesystem",
-        "Clean up: remove test file",
-        "docker compose down stops all services",
-        "Typecheck passes"
-      ],
-      "priority": 19,
-      "passes": true,
-      "notes": "Fixed Dockerfile to only copy go/gofmt wrappers to avoid conflicting with node/npm/npx used by Claude Code. All tests passed: services start, bridge/wrapper go commands work, file creation verified on host."
     }
   ]
 }
