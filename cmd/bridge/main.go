@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+
+	"golang.org/x/term"
 )
 
 const version = "0.1.0"
@@ -87,7 +89,12 @@ func runCommand(config *Config, args []string) int {
 	translatedArgs := cmd.TranslateArgs(cmdArgs)
 
 	// Build docker exec command
+	// Use -i for interactive mode (keeps stdin open)
+	// Use -t for TTY allocation when both stdin and stdout are terminals (for colored output)
 	dockerArgs := []string{"exec", "-i"}
+	if term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd())) {
+		dockerArgs = append(dockerArgs, "-t")
+	}
 
 	// Add workdir if specified
 	if cmd.Workdir != "" {
