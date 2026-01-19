@@ -1,7 +1,7 @@
 {
   "project": "AI Dev Container",
   "branchName": "ralph/docker-volume-auth",
-  "description": "Docker Volume for Claude Authentication - Replace insecure bind mount with named Docker volume for per-project credential storage",
+  "description": "Docker Volume Auth + Claude Code Viewer - Named volume for credentials and web UI for monitoring sessions",
   "userStories": [
     {
       "id": "US-004",
@@ -57,6 +57,51 @@
         "Remove any references to mounting ~/.claude from host"
       ],
       "priority": 4,
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-006",
+      "title": "Add Claude Code Viewer service to compose.yaml",
+      "description": "As a developer, I want a web-based viewer service so I can monitor Claude sessions in real-time and review historical logs.",
+      "acceptanceCriteria": [
+        "Add 'viewer' service to compose.yaml using node:20-alpine base image",
+        "Service runs npx @kimuson/claude-code-viewer@latest with --hostname 0.0.0.0",
+        "Service mounts claude-config volume to /home/node/.claude for session log access",
+        "Port configurable via VIEWER_PORT environment variable (default: 3000)",
+        "Port mapping uses ${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}",
+        "Container starts successfully with docker compose up -d",
+        "Viewer accessible at http://localhost:<port> and shows Claude sessions",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-007",
+      "title": "Update README with viewer documentation",
+      "description": "As a developer, I want documentation on how to use the viewer so I can monitor Claude sessions effectively.",
+      "acceptanceCriteria": [
+        "README documents the viewer service and its purpose",
+        "README explains how to access the viewer (default: http://localhost:3000)",
+        "README documents the VIEWER_PORT environment variable for customization",
+        "README mentions key features: real-time monitoring, session search, log viewing"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-008",
+      "title": "Add viewer configuration to .env.example",
+      "description": "As a developer, I want an example environment file showing viewer configuration options.",
+      "acceptanceCriteria": [
+        "Create .env.example if it doesn't exist",
+        "Add VIEWER_PORT=3000 with comment explaining its purpose",
+        "Add any other relevant environment variables for the viewer"
+      ],
+      "priority": 7,
       "passes": false,
       "notes": ""
     },
@@ -69,7 +114,7 @@
         "Command provided: docker volume rm <project>_claude-config",
         "Notes that this will require going through Claude init again"
       ],
-      "priority": 5,
+      "priority": 8,
       "passes": false,
       "notes": ""
     }
