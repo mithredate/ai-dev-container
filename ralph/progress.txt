@@ -1,206 +1,142 @@
+# Ralph Progress Log
+Started: Mon Jan 19 01:26:29 CET 2026
+
 ## Codebase Patterns
-- Use hadolint via Docker for Dockerfile linting: `docker run --rm -i hadolint/hadolint < Dockerfile`
-- Node.js 20 Alpine base image: `node:20-alpine`
-- node:20-alpine has existing node user/group at UID/GID 1000 - use 1001 for custom users
-- Create non-root user with: `addgroup -g 1001 name && adduser -u 1001 -G name -h /home/name -D name`
-- Claude Code npm package: `@anthropic-ai/claude-code` (pin version for hadolint compliance)
-- Docker CLI on Alpine: `docker-cli` package (client only, no daemon) - pin version for hadolint
-- Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
-- Shellcheck via Docker: `docker run --rm -v /path:/scripts koalaman/shellcheck:stable /scripts/scriptname`
-- Use `# shellcheck shell=dash` directive for Alpine shell scripts (dash supports `local` keyword)
-- yq binary can be downloaded via multi-stage build from GitHub releases
+- GitHub Actions workflows go in `.github/workflows/` directory
+- Commit messages follow pattern: `feat: [US-XXX] - Story Title`
+- Project has no package.json or Makefile - no standard quality check commands
+- YAML validation can be done with Python's yaml module or similar tools
 
 ---
 
-## 2026-01-18 - US-001
-- What was implemented: Base Dockerfile with Alpine Linux, Node.js 20+ LTS, multi-stage build structure, non-root 'claude' user, and /workspace working directory
-- Files changed: Dockerfile (created)
-- **Learnings for future iterations:**
-  - Node.js 20 Alpine image is `node:20-alpine`
-  - Multi-stage builds use `AS` alias for stages
-  - Alpine uses `addgroup`/`adduser` instead of `groupadd`/`useradd`
-  - hadolint returns empty output when Dockerfile passes
----
-
-## 2026-01-18 - US-002
-- What was implemented: Added claude-code CLI installation to Docker image via npm global install
-- Files changed: Dockerfile (modified)
-- **Learnings for future iterations:**
-  - The npm package for Claude Code is `@anthropic-ai/claude-code`
-  - hadolint requires pinned npm versions (DL3016) - use `package@version` format
-  - Clean npm cache with `npm cache clean --force` to reduce image size
-  - Check latest npm package version with: `npm view <package> version`
----
-
-## 2026-01-18 - US-003
-- What was implemented: Added Docker CLI client to image with DOCKER_HOST environment variable for container communication
-- Files changed: Dockerfile (modified)
-- **Learnings for future iterations:**
-  - Alpine provides `docker-cli` package which contains only the Docker client (no daemon)
-  - hadolint DL3018 requires pinning apk package versions: `apk add --no-cache package=version`
-  - Check available Alpine package version with: `docker run --rm node:20-alpine apk info <package>`
-  - DOCKER_HOST can be set to empty string as default, allowing override at runtime or via docker-compose
----
-
-## 2026-01-18 - US-004
-- What was implemented: Created bridge config YAML schema with documented example at examples/claude-bridge.yaml
-- Files changed: examples/claude-bridge.yaml (created)
-- **Learnings for future iterations:**
-  - Bridge config schema supports: version, default_container, containers (name overrides), commands (with container, exec, workdir)
-  - Use yq via Docker for YAML validation: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
-  - Example files should be well-commented to serve as both documentation and working templates
-  - YAML keys with special characters like colons need quoting: `"test:php"`
----
-
-## 2026-01-18 - US-005
-- What was implemented: Created bridge shell script with YAML config parsing using yq, including error handling for missing or invalid config files
-- Files changed: scripts/bridge (created)
-- **Learnings for future iterations:**
-  - Use `# shellcheck shell=dash` directive to tell shellcheck that the script targets dash/ash (which supports `local`)
-  - Alpine's sh is actually BusyBox ash which supports `local` keyword unlike strict POSIX sh
-  - Shellcheck via Docker: `docker run --rm -v /path:/scripts koalaman/shellcheck:stable /scripts/scriptname`
-  - Bridge script uses BRIDGE_CONFIG env var to allow config path override (defaults to /workspace/.claude/bridge.yaml)
-  - yq queries: `.version // ""` provides default value if key missing, `.key | type` checks if key exists
----
-
-## 2026-01-18 - US-006
-- What was implemented: Added command routing functionality to the bridge script including command lookup, container name resolution, docker exec command building, and argument passthrough
-- Files changed: scripts/bridge (modified)
-- **Learnings for future iterations:**
-  - yq bracket notation for quoted keys: `.commands["test:php"]` to access keys with special characters
-  - Global variables (CMD_CONTAINER, CMD_EXEC, CMD_WORKDIR) work well for passing data between functions in shell scripts
-  - Use `shift` to separate first argument from remaining ones for cleaner argument handling
-  - `# shellcheck disable=SC2086` allows word splitting when intentional (for building command strings)
-  - Default container fallback requires checking both empty string and "null" (yq returns "null" for missing keys)
----
-
-## 2026-01-18 - US-007
-- What was implemented: Added real-time output streaming with TTY allocation (-t flag) and exit code propagation to the bridge script
-- Files changed: scripts/bridge (modified)
-- **Learnings for future iterations:**
-  - Use `[ -t 1 ]` to check if STDOUT is connected to a terminal before allocating TTY
-  - TTY allocation (`docker exec -t`) enables real-time unbuffered output streaming
-  - Exit codes automatically propagate when the docker exec command is the last command in the function/script
-  - STDOUT and STDERR stream directly through docker exec without needing special handling
-  - Document output behavior in the usage/help section for user awareness
----
-
-## 2026-01-18 - US-008
-- What was implemented: Verified and fixed bridge script installation in Docker image. Fixed UID/GID conflict with pre-existing node user in node:20-alpine base image.
-- Files changed: Dockerfile (modified - changed claude user UID/GID from 1000 to 1001)
-- **Learnings for future iterations:**
-  - node:20-alpine already has a 'node' user/group with UID/GID 1000
-  - Must use different IDs (e.g., 1001) when creating custom users in node-based images
-  - yq binary is downloaded in builder stage and copied to runtime stage for YAML parsing
-  - Test image builds early to catch runtime errors (e.g., user/group conflicts)
-  - Verify all CLI tools work with --help/--version before marking story complete
----
-
-## 2026-01-18 - US-009
-- What was implemented: Added compose.yml (v2 format) to complete docker-compose examples. The docker-compose.yml (v1) was already present.
-- Files changed: examples/compose.yml (created)
-- **Learnings for future iterations:**
-  - Docker Compose V2 uses compose.yml by default (no version field required)
-  - Both formats (v1 with version field, v2 without) are valid and work with `docker compose` command
-  - Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
-  - tecnativa/docker-socket-proxy is the standard secure Docker socket proxy image
-  - Key proxy settings: CONTAINERS=1, EXEC=1, POST=1 for Claude bridge script to work
----
-
-## 2026-01-18 - US-010
-- What was implemented: Added session persistence volume mount to docker-compose examples with graceful fallback support
+## 2026-01-19 01:30:55 - US-001
+- What was implemented:
+  - Created `.github/workflows/docker-publish.yml` workflow file
+  - Workflow triggers on: push to main branch, version tags (v*.*.*), and workflow_dispatch
+  - Named "Build and Publish Docker Image" with job "Build and Push Docker Image"
+  - Includes checkout step using actions/checkout@v4
 - Files changed:
-  - examples/docker-compose.yml (modified - added .claude volume mount)
-  - examples/compose.yml (modified - added .claude volume mount)
-  - Dockerfile (modified - pre-create /home/claude/.claude directory)
+  - `.github/workflows/docker-publish.yml` (new file)
 - **Learnings for future iterations:**
-  - Volume mounts for session persistence should be optional with graceful fallback
-  - Pre-creating directories in Dockerfile ensures container works with or without volume mount
-  - Document what gets persisted in volume (auth tokens, settings, session state) in compose comments
-  - The hadolint command via input redirection may be blocked; use volume mount instead
+  - The Write tool can create parent directories automatically
+  - No built-in linting tools in this project - YAML validation requires external tools
+  - Workflow structure: name, on (triggers), jobs with steps
 ---
 
-## 2026-01-19 - US-011
-- What was implemented: Added YOLO mode environment variable support to docker-compose examples with comprehensive security documentation
+## 2026-01-19 - US-002
+- What was implemented:
+  - Added GHCR authentication to the workflow using docker/login-action@v3
+  - Set permissions (contents: read, packages: write) at job level
+  - Created environment variables for REGISTRY (ghcr.io) and IMAGE_NAME (${{ github.repository }})
+  - Added docker/build-push-action@v5 for building and pushing images
+  - Image pushed to ghcr.io/${{ github.repository }} namespace
 - Files changed:
-  - examples/docker-compose.yml (modified - added CLAUDE_YOLO env var with security warnings)
-  - examples/compose.yml (modified - added CLAUDE_YOLO env var with security warnings)
+  - `.github/workflows/docker-publish.yml` (modified)
 - **Learnings for future iterations:**
-  - YOLO mode (CLAUDE_YOLO=1) disables confirmation prompts in Claude Code
-  - Security-sensitive features should be commented out by default (safe mode)
-  - Include explicit warnings about destructive commands (rm -rf, DROP TABLE, etc.)
-  - Documentation should emphasize "isolated development environments only"
+  - docker/login-action@v3 is the standard way to authenticate to GHCR
+  - GITHUB_TOKEN is accessed via secrets.GITHUB_TOKEN
+  - Use env vars at workflow level for reusable values like registry URL and image name
+  - Permissions should be set at job level when using GITHUB_TOKEN for packages
 ---
 
-## 2026-01-19 - US-012
-- What was implemented: Created CLAUDE.md.template for multi-container projects with comprehensive sections
+## 2026-01-19 - US-003
+- What was implemented:
+  - Added docker/metadata-action@v5 to generate dynamic image tags and labels
+  - Configured tagging strategy:
+    - `type=raw,value=latest,enable={{is_default_branch}}` for :latest tag on main
+    - `type=sha,prefix=sha-,format=short` for :sha-<short-sha> tag on all builds
+    - `type=semver,pattern={{version}}` for :1.2.3 tag on version tags
+    - `type=semver,pattern={{major}}.{{minor}}` for :1.2 tag on version tags
+    - `type=semver,pattern={{major}}` for :1 tag on version tags
+  - Added OCI labels: title, description (created date and revision are auto-added by metadata-action)
+  - Updated build-push-action to use `${{ steps.meta.outputs.tags }}` and `${{ steps.meta.outputs.labels }}`
 - Files changed:
-  - examples/CLAUDE.md.template (created - 207 lines)
-- **Template includes:**
-  - Project overview section with tech stack placeholders
-  - Container topology table with example containers
-  - Bridge command reference with PHP, Node.js, and database examples
-  - Testing commands section and testing strategy
-  - "Do Not" warnings section with multi-container gotchas
-  - Codebase patterns section for project-specific learnings
+  - `.github/workflows/docker-publish.yml` (modified)
 - **Learnings for future iterations:**
-  - CLAUDE.md templates should include concrete command examples (not just descriptions)
-  - The "Do Not" section is critical for multi-container setups - prevents common mistakes
-  - Include both correct and incorrect examples to make the guidance clear
-  - Template placeholders like `[YOUR PROJECT NAME]` help users know what to customize
+  - docker/metadata-action@v5 auto-generates OCI labels like created date, revision, source, etc.
+  - Use `id: meta` on the step to reference outputs in later steps via `${{ steps.meta.outputs.tags }}`
+  - `{{is_default_branch}}` is a built-in template for detecting pushes to main/master
+  - `type=sha` with `format=short` produces 7-character SHA prefixed with chosen prefix
+  - `type=semver` patterns are only applied when a semver tag triggers the workflow
 ---
 
-## 2026-01-19 - US-013
-- What was implemented: Created README.md with comprehensive integration instructions
+## 2026-01-19 - US-004
+- What was implemented:
+  - Updated Dockerfile to support multi-architecture builds using TARGETARCH
+  - Added `ARG TARGETARCH` declaration for Docker BuildKit automatic variable
+  - Changed hardcoded `yq_linux_amd64` to `yq_linux_${TARGETARCH}`
+  - Validated Dockerfile with hadolint (passes without errors)
 - Files changed:
-  - README.md (created - 230 lines)
-- **README includes:**
-  - Quick start section with minimal docker-compose snippet (10 lines)
-  - Bridge configuration reference with YAML schema documentation
-  - Configuration reference tables for bridge.yaml fields
-  - Session persistence section
-  - Security best practices section with credential isolation warnings
-  - YOLO mode documentation with security warnings
-  - Examples directory reference
-  - Build instructions
+  - `Dockerfile` (modified)
 - **Learnings for future iterations:**
-  - Quick start should be minimal (5-10 lines) to lower barrier to adoption
-  - Security documentation should explicitly show what NOT to do (with code examples)
-  - Reference tables are helpful for configuration schemas
-  - Link to example files rather than duplicating content
+  - `TARGETARCH` is automatically set by Docker BuildKit to either `amd64` or `arm64`
+  - Declare `ARG TARGETARCH` before using it in the same build stage
+  - yq releases follow naming pattern: `yq_linux_<arch>` where arch is amd64 or arm64
+  - hadolint can be run via Docker: `cat Dockerfile | docker run --rm -i hadolint/hadolint`
+  - Docker build commands with `--platform` require QEMU setup for cross-platform emulation
 ---
 
-## 2026-01-19 - US-014
-- What was implemented: Verified credential isolation in Dockerfile and documentation. Added explicit warnings about sensitive directory mounts to CLAUDE.md.template
+## 2026-01-19 - US-005
+- What was implemented:
+  - Added docker/setup-qemu-action@v3 for cross-platform emulation support
+  - Added docker/setup-buildx-action@v3 for Docker BuildKit builder
+  - Configured build-push-action with `platforms: linux/amd64,linux/arm64`
+  - This creates a single manifest list containing both architectures
 - Files changed:
-  - examples/CLAUDE.md.template (modified - added "Do NOT mount sensitive host directories" section)
-- **Verification completed:**
-  - Dockerfile does not mount ~/.ssh, ~/.aws, ~/.config, or home directory (PASS - Dockerfile has no volume mounts)
-  - README.md already warns against mounting sensitive directories (lines 158-177)
-  - README.md documents passing credentials as env vars (lines 173-177)
-  - Docker-compose examples only mount project directory and .claude session data
+  - `.github/workflows/docker-publish.yml` (modified)
 - **Learnings for future iterations:**
-  - Security verification stories may require enhancing documentation rather than code changes
-  - Warning messages are more effective with concrete "WRONG vs CORRECT" examples
-  - The CLAUDE.md.template "Do Not" section is the right place for multi-container security warnings
+  - docker/setup-qemu-action@v3 must be added before docker/setup-buildx-action@v3
+  - `platforms: linux/amd64,linux/arm64` in build-push-action creates multi-arch manifest
+  - QEMU provides emulation layer for cross-platform builds on GitHub Actions runners
+  - Docker Buildx is required for multi-platform builds (standard docker build doesn't support it)
 ---
 
-## 2026-01-19 - US-015
-- What was implemented: Final image size optimization for Claude-Brain Sidecar Docker image
+## 2026-01-19 - US-006
+- What was implemented:
+  - Added registry-based build caching to the workflow
+  - Configured `cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache`
+  - Configured `cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max`
+  - Cache uses separate `:buildcache` tag to avoid polluting release tags
 - Files changed:
-  - Dockerfile (optimized - combined RUN layers, added cleanup steps, used COPY --chmod)
-- **Optimizations applied:**
-  - Combined builder stage RUN commands to reduce layers (wget + yq download in single RUN)
-  - Added explicit `rm -rf /var/cache/apk/*` and `rm -rf /tmp/*` cleanup after package installs
-  - Used `COPY --chmod=755` for bridge script to eliminate separate chmod RUN layer
-  - Improved comments documenting multi-stage build purpose and what stays in final image
-- **Size verification:**
-  - Final image content size: 98.1MB (target was < 150MB) ✓
-  - Multi-stage build successfully excludes wget from runtime stage
-  - Only essential packages in runtime: docker-cli, node.js, claude-code, yq, bridge script
+  - `.github/workflows/docker-publish.yml` (modified)
 - **Learnings for future iterations:**
-  - COPY --chmod is a Docker BuildKit feature that combines copy and permission setting in one layer
-  - `--no-cache` alone may not clear all apk artifacts; explicit `rm -rf /var/cache/apk/*` is recommended
-  - Content size (98.1MB) is more meaningful than disk usage (374MB) for image portability
-  - node:20-alpine base is ~49MB, so 49MB overhead for tooling is reasonable
+  - `cache-from` and `cache-to` are parameters of docker/build-push-action
+  - `type=registry` stores cache in the container registry itself
+  - `mode=max` caches all layers (not just final image layers) for maximum cache efficiency
+  - Using a separate tag like `:buildcache` keeps cache separate from versioned images
+  - The ref uses same image name but different tag to stay in same namespace
+---
+
+## 2026-01-19 - US-007
+- What was implemented:
+  - Added Trivy vulnerability scanning to the GitHub Actions workflow
+  - Generates SARIF report for GitHub Security tab integration
+  - Upload SARIF results using github/codeql-action/upload-sarif@v3
+  - Added step to log HIGH vulnerabilities as warnings (exit-code: 0)
+  - Added step to fail build on CRITICAL vulnerabilities (exit-code: 1)
+  - Added security-events: write permission to job for SARIF upload
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - aquasecurity/trivy-action@master scans container images for vulnerabilities
+  - Use separate steps for SARIF generation and table output for different purposes
+  - SARIF upload requires `security-events: write` permission in the job
+  - `exit-code: '1'` makes the step fail if vulnerabilities matching severity are found
+  - `exit-code: '0'` allows the step to pass while still logging vulnerabilities
+  - Use image tag with SHA (e.g., sha-abc1234) to reference the built image for scanning
+---
+
+## 2026-01-19 - US-008
+- What was implemented:
+  - Added workflow status badge to the top of README.md
+  - Badge uses GitHub Actions badge.svg format for dynamic status display
+  - Badge links to the Actions workflow runs page
+  - Badge references the correct workflow file path (docker-publish.yml)
+- Files changed:
+  - `README.md` (modified)
+- **Learnings for future iterations:**
+  - GitHub Actions badge format: `![Name](https://github.com/OWNER/REPO/actions/workflows/WORKFLOW.yml/badge.svg)`
+  - Badge link format: `https://github.com/OWNER/REPO/actions/workflows/WORKFLOW.yml`
+  - Badge automatically shows current passing/failing status
+  - Place badges immediately after the main heading for visibility
 ---

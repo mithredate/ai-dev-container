@@ -16,7 +16,7 @@
         "Workflow YAML syntax is valid (validated with yq or similar)"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -31,7 +31,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -48,7 +48,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -63,7 +63,7 @@
         "Build succeeds for linux/arm64 target"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -78,7 +78,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -92,7 +92,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -108,7 +108,7 @@
         "Workflow YAML syntax is valid"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
@@ -122,7 +122,7 @@
         "Badge uses correct workflow file path reference"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "notes": ""
     }
   ]
