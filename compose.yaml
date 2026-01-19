@@ -3,6 +3,7 @@
 # This compose file sets up:
 #   1. claude: The main Claude Code container (built from local Dockerfile)
 #   2. golang: A Go sidecar container for running go commands via bridge
+#   3. socket-proxy: Docker socket proxy for secure, limited Docker access
 #
 # Usage:
 #   docker compose up -d      # Start all services
@@ -12,6 +13,36 @@
 # (go build, go test, go vet, etc.) in the golang sidecar container.
 
 services:
+  # Docker socket proxy - limits Docker API access to exec operations only
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy
+    container_name: ai-dev-container-socket-proxy
+    environment:
+      # Only allow container inspection and exec operations
+      - CONTAINERS=1
+      - EXEC=1
+      - POST=1
+      # Disable all other Docker API endpoints
+      - IMAGES=0
+      - NETWORKS=0
+      - VOLUMES=0
+      - SERVICES=0
+      - TASKS=0
+      - NODES=0
+      - BUILD=0
+      - COMMIT=0
+      - CONFIGS=0
+      - DISTRIBUTION=0
+      - PLUGINS=0
+      - SECRETS=0
+      - SESSION=0
+      - SWARM=0
+      - SYSTEM=0
+    volumes:
+      # Mount Docker socket read-only to socket-proxy only
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
   # Main Claude Code container
   claude:
     build:
@@ -25,16 +56,15 @@ services:
       - CLAUDE_YOLO=${CLAUDE_YOLO:-0}
       # Point bridge to the config file
       - BRIDGE_CONFIG=/workspace/.claude/bridge.yaml
-      # Docker host for bridge to communicate with sidecar containers
-      - DOCKER_HOST=unix:///var/run/docker.sock
+      # Docker host via socket proxy for secure, limited Docker access
+      - DOCKER_HOST=tcp://socket-proxy:2375
     volumes:
       # Mount current project directory as workspace
       - .:/workspace
       # Mount ~/.claude for Claude session persistence and config
       - ~/.claude:/home/claude/.claude
-      # Docker socket for bridge to exec into sidecar containers
-      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
+      - socket-proxy
       - golang
     working_dir: /workspace
 
