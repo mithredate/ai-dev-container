@@ -20,3 +20,14 @@ Thread: N/A (first iteration)
   - Docker daemon not running on host, so image builds can't be tested locally
 ---
 
+## 2026-01-19 - US-002
+Thread: N/A
+- Implemented YOLO mode in entrypoint script
+- Added CLAUDE_YOLO env var check: when set to "1", runs `claude --dangerously-skip-permissions`
+- Updated log messages to indicate which mode is being used (safe mode vs YOLO mode)
+- Files changed: `scripts/entrypoint.sh` (modified)
+- **Learnings for future iterations:**
+  - POSIX shell uses `[ "$VAR" = "1" ]` for string comparison (not `==`)
+  - Use `sh -n script.sh` to verify shell script syntax without executing
+---
+
