@@ -1,0 +1,141 @@
+# Docker Compose Example: Claude Code Sidecar Integration
+# ========================================================
+# This example demonstrates how to add Claude Code as a sidecar service
+# to your existing docker-compose project using a secure Docker socket proxy.
+#
+# Key security features:
+# - Docker socket is NOT directly exposed to Claude container
+# - Socket proxy limits API access to only required operations
+# - Claude runs as non-root user
+#
+# Usage:
+# 1. Copy this file to your project
+# 2. Adjust the volumes/services to match your project structure
+# 3. Create .claude/bridge.yaml with your command mappings
+# 4. Run: docker-compose up -d
+
+version: "3.8"
+
+services:
+  # ===========================================
+  # Docker Socket Proxy (Security Layer)
+  # ===========================================
+  # Tecnativa's docker-socket-proxy provides a filtered proxy to the Docker socket.
+  # This prevents Claude from accessing dangerous Docker operations.
+  # See: https://github.com/Tecnativa/docker-socket-proxy
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    restart: unless-stopped
+    environment:
+      # Allow container listing (required for bridge script)
+      CONTAINERS: 1
+      # Allow exec operations (required for running commands in containers)
+      EXEC: 1
+      # Allow POST requests (required for exec create/start)
+      POST: 1
+      # Deny all other operations (these are denied by default, listed for clarity)
+      ALLOW_START: 0
+      ALLOW_STOP: 0
+      ALLOW_RESTARTS: 0
+      BUILD: 0
+      COMMIT: 0
+      CONFIGS: 0
+      DISTRIBUTION: 0
+      EVENTS: 0
+      IMAGES: 0
+      INFO: 0
+      NETWORKS: 0
+      NODES: 0
+      PLUGINS: 0
+      SECRETS: 0
+      SERVICES: 0
+      SESSION: 0
+      SWARM: 0
+      SYSTEM: 0
+      TASKS: 0
+      VOLUMES: 0
+    volumes:
+      # Mount Docker socket (read-only for additional security)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    # Socket proxy should not be exposed to host network
+    # It's only accessible from within the Docker network
+
+  # ===========================================
+  # Claude Code Sidecar
+  # ===========================================
+  # The Claude Code container that uses the socket proxy
+  # to execute commands in your project's containers.
+  claude:
+    image: claude-brain-sidecar:latest
+    # Build from local Dockerfile if image not available:
+    # build: ./path/to/ai-dev-container
+    depends_on:
+      - socket-proxy
+    environment:
+      # Connect to Docker via the socket proxy
+      DOCKER_HOST: tcp://socket-proxy:2375
+      # Required: Your Anthropic API key
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # ⚠️  YOLO Mode (Optional - DANGEROUS)
+      # Uncomment to enable minimal confirmation prompts.
+      # When enabled, Claude will execute commands without asking for confirmation.
+      #
+      # SECURITY WARNING:
+      # - Only enable in isolated development environments
+      # - NEVER enable in production or environments with sensitive data
+      # - Claude may execute destructive commands (rm -rf, DROP TABLE, etc.)
+      # - You assume full responsibility for any damage caused
+      # - Default: disabled (safe mode with confirmation prompts)
+      #
+      # CLAUDE_YOLO: "1"
+    volumes:
+      # Mount your project at /workspace (Claude's working directory)
+      - .:/workspace
+      # Session persistence: keeps authentication and settings across container restarts
+      # This is optional - Claude will work without it but you'll need to re-authenticate each time
+      # The .claude directory stores:
+      #   - Authentication tokens
+      #   - User preferences/settings
+      #   - Session state
+      - ./.claude:/home/claude/.claude
+    stdin_open: true
+    tty: true
+    # Run interactively: docker-compose run claude
+
+  # ===========================================
+  # Example Application Containers
+  # ===========================================
+  # Replace these with your actual project services.
+  # These are example containers that Claude can exec into.
+
+  # Example: PHP/Laravel application
+  app:
+    image: php:8.2-fpm-alpine
+    volumes:
+      - .:/var/www/html
+    working_dir: /var/www/html
+
+  # Example: Node.js frontend
+  node:
+    image: node:20-alpine
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: ["tail", "-f", "/dev/null"]  # Keep container running
+
+  # Example: Database
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: myapp
+      POSTGRES_USER: myapp
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
+
+# Networks (optional - using default bridge network)
+# If your project uses custom networks, ensure socket-proxy
+# and claude services are on the same network as your app containers.
