@@ -183,18 +183,44 @@ When `BRIDGE_ENABLED=1` is set, running `go build` in the Claude container will 
 
 When not set, wrapper scripts fall back to local binaries, allowing the container to work standalone.
 
-## Session Persistence
+## Authentication
 
-To persist authentication across container restarts, add a volume mount:
+Authentication is handled **per-project** using a Docker named volume. This approach is more secure and portable than host bind mounts, as it doesn't require matching UIDs between host and container.
 
-```yaml
-claude:
-  volumes:
-    - .:/workspace
-    - ./.claude:/home/claude/.claude  # Persists auth tokens and settings
+### First Run
+
+1. Start the container in detached mode:
+   ```bash
+   docker compose up -d claude
+   ```
+
+2. Attach to the container:
+   ```bash
+   docker attach ai-dev-container-claude
+   ```
+
+3. Claude's init script will guide you through first-time setup:
+   - Color/theme preferences
+   - Authentication (sign in with your Anthropic account)
+   - Other configuration options
+
+4. Detach from the container without stopping it: press `Ctrl+P` followed by `Ctrl+Q`
+
+### Subsequent Runs
+
+After initial setup, your credentials are cached in the `claude-config` Docker volume. Future container starts will automatically use the cached credentials - no re-authentication needed.
+
+The volume is project-specific (named `<project>_claude-config`, e.g., `ai-dev-container_claude-config`) so different projects maintain separate authentication states.
+
+### Re-authentication
+
+To force re-authentication (e.g., to switch accounts or fix auth issues), delete the config volume:
+
+```bash
+docker volume rm ai-dev-container_claude-config
 ```
 
-This is optional. Without it, you'll need to re-authenticate each time the container starts.
+Replace `ai-dev-container` with your project's directory name. After deletion, the next container start will trigger the first-run setup flow again.
 
 ## Security Best Practices
 
