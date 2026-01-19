@@ -33,3 +33,12 @@ Started: Mon Jan 19 2026
   - Git 2.52.0 adds ~12MB to image (includes libcurl, pcre2, and related dependencies)
 ---
 
+## 2026-01-19 - US-005
+- What was implemented: Added ENV SHELL=/bin/sh to Dockerfile so Claude Code's Bash tool can find a shell
+- Files changed: Dockerfile
+- **Learnings for future iterations:**
+  - Claude Code requires the SHELL environment variable to be set, otherwise it reports "No suitable shell found"
+  - Alpine Linux uses /bin/sh (busybox ash), not bash - set SHELL=/bin/sh accordingly
+  - ENV variables in Dockerfile are available to all processes in the container, not just the entrypoint
+---
+

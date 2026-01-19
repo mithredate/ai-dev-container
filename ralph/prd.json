@@ -27,8 +27,8 @@
         "Claude Code Bash tool executes commands without 'No suitable shell found' error"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "BLOCKER: Claude Code needs SHELL env var to run bash commands"
+      "passes": true,
+      "notes": ""
     },
     {
       "id": "US-001",
