@@ -1,3 +1,24 @@
 # Ralph Progress Log
 Started: Mon Jan 19 01:26:29 CET 2026
+
+## Codebase Patterns
+- GitHub Actions workflows go in `.github/workflows/` directory
+- Commit messages follow pattern: `feat: [US-XXX] - Story Title`
+- Project has no package.json or Makefile - no standard quality check commands
+- YAML validation can be done with Python's yaml module or similar tools
+
+---
+
+## 2026-01-19 01:30:55 - US-001
+- What was implemented:
+  - Created `.github/workflows/docker-publish.yml` workflow file
+  - Workflow triggers on: push to main branch, version tags (v*.*.*), and workflow_dispatch
+  - Named "Build and Publish Docker Image" with job "Build and Push Docker Image"
+  - Includes checkout step using actions/checkout@v4
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (new file)
+- **Learnings for future iterations:**
+  - The Write tool can create parent directories automatically
+  - No built-in linting tools in this project - YAML validation requires external tools
+  - Workflow structure: name, on (triggers), jobs with steps
 ---
