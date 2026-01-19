@@ -90,3 +90,19 @@ Started: Mon Jan 19 01:26:29 CET 2026
   - QEMU provides emulation layer for cross-platform builds on GitHub Actions runners
   - Docker Buildx is required for multi-platform builds (standard docker build doesn't support it)
 ---
+
+## 2026-01-19 - US-006
+- What was implemented:
+  - Added registry-based build caching to the workflow
+  - Configured `cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache`
+  - Configured `cache-to: type=registry,ref=ghcr.io/${{ github.repository }}:buildcache,mode=max`
+  - Cache uses separate `:buildcache` tag to avoid polluting release tags
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - `cache-from` and `cache-to` are parameters of docker/build-push-action
+  - `type=registry` stores cache in the container registry itself
+  - `mode=max` caches all layers (not just final image layers) for maximum cache efficiency
+  - Using a separate tag like `:buildcache` keeps cache separate from versioned images
+  - The ref uses same image name but different tag to stay in same namespace
+---
