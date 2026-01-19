@@ -39,7 +39,7 @@ COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
 # These scripts route commands through the bridge when BRIDGE_ENABLED=1
 # The node wrapper has special handling via CLAUDE_STARTING env var to allow Claude Code
 # (a Node.js app) to start with native node, while routing subsequent node calls through the bridge
-COPY --chmod=755 scripts/wrappers/go scripts/wrappers/gofmt scripts/wrappers/node scripts/wrappers/npm scripts/wrappers/npx /scripts/wrappers/
+COPY --chmod=755 scripts/wrappers /scripts/wrappers/
 
 # Prepend wrappers directory to PATH so wrappers take precedence
 ENV PATH="/scripts/wrappers:$PATH"
