@@ -144,7 +144,7 @@
       ],
       "priority": 9,
       "passes": true,
-      "notes": "Docker build not tested locally (no Docker daemon)"
+      "notes": "Docker build tested - required fixing golang:1.22-alpine to golang:1.24-alpine to match go.mod requirements"
     },
     {
       "id": "US-010",
@@ -158,7 +158,7 @@
       ],
       "priority": 10,
       "passes": false,
-      "notes": ""
+      "notes": "BLOCKED: Image size is 359MB. 150MB target unrealistic - base dependencies alone exceed it: node:20-alpine (~144MB) + docker-cli (~31MB) + claude-code (~87MB) = 262MB minimum. Go bridge adds only 2.5MB. Verified: build succeeds, yq removed, typecheck passes. Fixed Dockerfile golang:1.22->1.24 to match go.mod. Options: (1) revise target to 400MB, (2) use alternative base image, (3) accept current size."
     },
     {
       "id": "US-011",
