@@ -10,6 +10,7 @@ Started: Mon Jan 19 2026
 - Dockerfile Go version must match go.mod (currently requires Go 1.24+)
 - Docker image size ~359MB due to: node:20-alpine (144MB) + docker-cli (31MB) + claude-code (87MB)
 - Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
+- Only include wrapper scripts for commands configured in bridge.yaml - node/npm/npx must stay native for Claude Code
 
 ---
 
@@ -277,5 +278,25 @@ Thread: N/A
 - **Learnings for future iterations:**
   - YOLO mode section already existed and was adequate - check for existing documentation before adding
   - README updates are straightforward text changes - no complex logic involved
+---
+
+## 2026-01-19 - US-019
+Thread: N/A
+- Verified end-to-end setup works with docker compose
+- Fixed critical bug: Dockerfile was copying ALL wrapper scripts including node/npm/npx
+  - This broke Claude Code because it's a Node.js app that needs native node/npm
+  - Solution: Only copy go/gofmt wrappers (commands actually configured in bridge.yaml)
+- Test results:
+  - `docker compose up -d` starts all services (claude, golang, socket-proxy)
+  - `bridge go version` returns Go 1.24.12 from golang container
+  - `go version` (via wrapper) returns same Go version
+  - File creation in /workspace syncs to host filesystem
+  - `docker compose down` cleanly stops all services
+- Quality checks pass: go build, go vet
+- Files changed: `Dockerfile` (modified)
+- **Learnings for future iterations:**
+  - BRIDGE_ENABLED=1 routes ALL wrapper commands through bridge - only include wrappers for configured commands
+  - Node-based CLI tools (like Claude Code) need native node/npm/npx - never wrap these in the base image
+  - Test docker compose services interactively before marking verification stories as complete
 ---
 

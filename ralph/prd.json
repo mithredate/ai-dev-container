@@ -292,8 +292,8 @@
         "Typecheck passes"
       ],
       "priority": 19,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Fixed Dockerfile to only copy go/gofmt wrappers to avoid conflicting with node/npm/npx used by Claude Code. All tests passed: services start, bridge/wrapper go commands work, file creation verified on host."
     }
   ]
 }
