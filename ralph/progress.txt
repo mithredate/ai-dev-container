@@ -59,3 +59,19 @@ Started: Mon Jan 19 01:26:29 CET 2026
   - `type=sha` with `format=short` produces 7-character SHA prefixed with chosen prefix
   - `type=semver` patterns are only applied when a semver tag triggers the workflow
 ---
+
+## 2026-01-19 - US-004
+- What was implemented:
+  - Updated Dockerfile to support multi-architecture builds using TARGETARCH
+  - Added `ARG TARGETARCH` declaration for Docker BuildKit automatic variable
+  - Changed hardcoded `yq_linux_amd64` to `yq_linux_${TARGETARCH}`
+  - Validated Dockerfile with hadolint (passes without errors)
+- Files changed:
+  - `Dockerfile` (modified)
+- **Learnings for future iterations:**
+  - `TARGETARCH` is automatically set by Docker BuildKit to either `amd64` or `arm64`
+  - Declare `ARG TARGETARCH` before using it in the same build stage
+  - yq releases follow naming pattern: `yq_linux_<arch>` where arch is amd64 or arm64
+  - hadolint can be run via Docker: `cat Dockerfile | docker run --rm -i hadolint/hadolint`
+  - Docker build commands with `--platform` require QEMU setup for cross-platform emulation
+---
