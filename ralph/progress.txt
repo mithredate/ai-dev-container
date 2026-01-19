@@ -46,3 +46,19 @@ Thread: N/A
   - Custom `flag.Usage` function provides better help formatting than default
 ---
 
+## 2026-01-19 - US-004
+Thread: N/A
+- Implemented config parsing in Go bridge with `cmd/bridge/config.go`
+- Config struct supports: version, default_container, containers, commands
+- Command struct supports: container, exec, workdir
+- LoadConfig function: uses BRIDGE_CONFIG env var, falls back to /workspace/.claude/bridge.yaml
+- Validation: checks required fields (version="1", commands with container/exec)
+- Error handling: clear messages for missing files, invalid YAML (with line numbers), missing fields
+- Added ResolveContainer helper for container name mapping
+- Files changed: `cmd/bridge/config.go` (new), `cmd/bridge/main.go` (modified)
+- **Learnings for future iterations:**
+  - yaml.v3 has yaml.TypeError for structured error parsing with line info
+  - Use errors.As/errors.Is for error type checking in Go
+  - Config validation should be a separate method for reusability
+---
+
