@@ -22,3 +22,19 @@ Started: Mon Jan 19 01:26:29 CET 2026
   - No built-in linting tools in this project - YAML validation requires external tools
   - Workflow structure: name, on (triggers), jobs with steps
 ---
+
+## 2026-01-19 - US-002
+- What was implemented:
+  - Added GHCR authentication to the workflow using docker/login-action@v3
+  - Set permissions (contents: read, packages: write) at job level
+  - Created environment variables for REGISTRY (ghcr.io) and IMAGE_NAME (${{ github.repository }})
+  - Added docker/build-push-action@v5 for building and pushing images
+  - Image pushed to ghcr.io/${{ github.repository }} namespace
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - docker/login-action@v3 is the standard way to authenticate to GHCR
+  - GITHUB_TOKEN is accessed via secrets.GITHUB_TOKEN
+  - Use env vars at workflow level for reusable values like registry URL and image name
+  - Permissions should be set at job level when using GITHUB_TOKEN for packages
+---
