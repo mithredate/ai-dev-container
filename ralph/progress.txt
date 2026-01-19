@@ -9,6 +9,7 @@ Started: Mon Jan 19 2026
 - Go CLI uses standard library `flag` package for argument parsing
 - Dockerfile Go version must match go.mod (currently requires Go 1.24+)
 - Docker image size ~359MB due to: node:20-alpine (144MB) + docker-cli (31MB) + claude-code (87MB)
+- Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
 
 ---
 
@@ -230,5 +231,21 @@ Thread: N/A
   - Wrapper scripts use exit code 127 when command not found (standard shell convention)
   - Passthrough searches specific paths rather than relying on PATH to avoid infinite recursion
   - Using `command -v` to get wrapper's own path allows comparing against real binary paths
+---
+
+## 2026-01-19 - US-016
+Thread: N/A
+- Updated Dockerfile to include wrapper scripts in the final image
+- Initial attempt: copied wrappers to /usr/local/bin/ - failed because it overwrote real node binary
+- Fixed: copied wrappers to /scripts/wrappers/ directory instead
+- Added `ENV PATH="/scripts/wrappers:$PATH"` to prepend wrappers directory to PATH
+- Verified passthrough mode works: `node --version`, `npm --version`, `npx --version` all return correct versions
+- Docker build completes successfully
+- Quality checks pass: go build, go vet
+- Files changed: `Dockerfile` (modified)
+- **Learnings for future iterations:**
+  - Don't copy wrapper scripts to /usr/local/bin/ in node:20-alpine - real node/npm/npx binaries live there
+  - Use separate directory (/scripts/wrappers/) and prepend to PATH for wrapper precedence
+  - Always test passthrough mode when adding wrapper scripts to verify they don't break local binaries
 ---
 

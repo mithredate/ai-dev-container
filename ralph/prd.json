@@ -243,8 +243,8 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Wrappers copied to /scripts/wrappers/ (not /usr/local/bin/) to avoid overwriting real binaries. PATH prepended with /scripts/wrappers to ensure wrapper precedence. Docker build and passthrough mode verified."
     },
     {
       "id": "US-017",
