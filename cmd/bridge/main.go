@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 )
 
 const version = "0.1.0"
@@ -49,10 +50,75 @@ func main() {
 		os.Exit(1)
 	}
 
-	// TODO: implement command routing (US-006)
-	_ = config // Config loaded successfully, routing not yet implemented
-	fmt.Fprintf(os.Stderr, "bridge: command routing not yet implemented\n")
-	os.Exit(1)
+	// Route and execute the command
+	exitCode := runCommand(config, args)
+	os.Exit(exitCode)
+}
+
+// runCommand routes and executes the given command based on config.
+// Returns the exit code from the executed command.
+func runCommand(config *Config, args []string) int {
+	cmdName := args[0]
+	cmdArgs := args[1:]
+
+	// Look up command in config
+	cmd, found := config.Commands[cmdName]
+
+	if !found {
+		// Command not in config - use default container if set
+		if config.DefaultContainer == "" {
+			fmt.Fprintf(os.Stderr, "Error: unknown command '%s' and no default_container configured\n", cmdName)
+			return 1
+		}
+		// Create a minimal command config using default container
+		cmd = Command{
+			Container: config.DefaultContainer,
+			Exec:      cmdName, // Use the command name as-is
+		}
+	}
+
+	// Resolve container name (apply containers mapping)
+	containerName := config.ResolveContainer(cmd.Container)
+
+	// Determine the actual executable (use exec if set, otherwise cmdName)
+	executable := cmd.Exec
+
+	// Translate path arguments
+	translatedArgs := cmd.TranslateArgs(cmdArgs)
+
+	// Build docker exec command
+	dockerArgs := []string{"exec", "-i"}
+
+	// Add workdir if specified
+	if cmd.Workdir != "" {
+		dockerArgs = append(dockerArgs, "-w", cmd.Workdir)
+	}
+
+	// Add container name
+	dockerArgs = append(dockerArgs, containerName)
+
+	// Add the command and its arguments
+	dockerArgs = append(dockerArgs, executable)
+	dockerArgs = append(dockerArgs, translatedArgs...)
+
+	// Execute docker command
+	dockerCmd := exec.Command("docker", dockerArgs...)
+	dockerCmd.Stdin = os.Stdin
+	dockerCmd.Stdout = os.Stdout
+	dockerCmd.Stderr = os.Stderr
+
+	err := dockerCmd.Run()
+	if err != nil {
+		// Check for exit error to get exit code
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			return exitErr.ExitCode()
+		}
+		// Other error (docker not found, etc.)
+		fmt.Fprintf(os.Stderr, "Error: failed to execute docker: %s\n", err)
+		return 1
+	}
+
+	return 0
 }
 
 func printUsage() {
