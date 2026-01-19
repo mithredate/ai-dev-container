@@ -18,8 +18,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Volume mounted to /root/.claude since npx runs as root in alpine"
     },
     {
       "id": "US-007",

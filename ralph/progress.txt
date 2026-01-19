@@ -12,6 +12,17 @@ Started: Sun Jan 19 2026
 - Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
 - Node/npm/npx wrappers use CLAUDE_STARTING=1 env var to allow Claude Code startup with native node, then route subsequent calls through bridge
 - Use named Docker volumes for credential storage instead of bind mounts (more portable across UID mismatches)
+- Claude Code Viewer npx container mounts volumes to `/root/.claude` (not `/home/node/.claude`) since npx runs as root
 
+---
+
+## 2026-01-19 - US-006
+- Added Claude Code Viewer service to compose.yaml
+- Files changed: compose.yaml
+- **Learnings for future iterations:**
+  - npx in node:20-alpine runs as root, so volumes must mount to /root/.claude not /home/node/.claude
+  - The viewer automatically detects the projects directory at /root/.claude/projects
+  - PORT environment variable controls the internal port, but port mapping also needs both host and container ports
+  - Viewer successfully found 1 project and 3 sessions after proper volume mount
 ---
 
