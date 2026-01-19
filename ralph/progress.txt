@@ -10,7 +10,7 @@ Started: Mon Jan 19 2026
 - Dockerfile Go version must match go.mod (currently requires Go 1.24+)
 - Docker image size ~359MB due to: node:20-alpine (144MB) + docker-cli (31MB) + claude-code (87MB)
 - Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
-- Only include wrapper scripts for commands configured in bridge.yaml - node/npm/npx must stay native for Claude Code
+- Node/npm/npx wrappers use CLAUDE_STARTING=1 env var to allow Claude Code startup with native node, then route subsequent calls through bridge
 
 ---
 
@@ -298,5 +298,23 @@ Thread: N/A
   - BRIDGE_ENABLED=1 routes ALL wrapper commands through bridge - only include wrappers for configured commands
   - Node-based CLI tools (like Claude Code) need native node/npm/npx - never wrap these in the base image
   - Test docker compose services interactively before marking verification stories as complete
+---
+
+## 2026-01-19 - US-019 Fix (Node wrapper intercept)
+Thread: N/A
+- Fixed issue: node/npm/npx wrappers were removed in US-019 to prevent breaking Claude Code
+- Problem: Users developing Node.js apps want node/npm/npx calls intercepted after Claude starts
+- Solution: Added CLAUDE_STARTING=1 environment variable mechanism
+  - entrypoint.sh sets CLAUDE_STARTING=1 before running claude
+  - node wrapper checks this flag: if set, uses native node and unsets flag for child processes
+  - Subsequent node/npm/npx calls (from Claude's subprocesses) route through the bridge
+- Files changed:
+  - `scripts/wrappers/node` (modified - added CLAUDE_STARTING check)
+  - `scripts/entrypoint.sh` (modified - sets CLAUDE_STARTING=1)
+  - `Dockerfile` (modified - now copies node/npm/npx wrappers again)
+- **Learnings for future iterations:**
+  - Use environment variables to control wrapper behavior during different execution phases
+  - The key insight: Claude Code's startup uses node once, then subsequent node calls are user commands
+  - unset in a wrapper before exec ensures child processes don't inherit the startup flag
 ---
 

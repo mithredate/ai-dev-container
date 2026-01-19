@@ -13,6 +13,11 @@ log() {
 
 # Main entry point
 main() {
+    # Set CLAUDE_STARTING=1 so the node wrapper knows to use native node
+    # for Claude's startup. The wrapper will unset this for child processes,
+    # allowing subsequent node/npm/npx calls to be routed through the bridge.
+    export CLAUDE_STARTING=1
+
     # Check for YOLO mode (skip all permission prompts)
     if [ "$CLAUDE_YOLO" = "1" ]; then
         log "Starting Claude CLI in YOLO mode (--dangerously-skip-permissions)..."
