@@ -24,3 +24,12 @@ Started: Mon Jan 19 2026
   - For credential storage, named volumes are more secure than bind mounts as they don't require host path permissions
 ---
 
+## 2026-01-19 - US-004
+- What was implemented: Added git to container image via apk add in Dockerfile
+- Files changed: Dockerfile
+- **Learnings for future iterations:**
+  - Alpine packages can be added to existing `apk add` command without version pinning if the package version doesn't need to be locked
+  - To test a command inside the container bypassing entrypoint, use `docker run --rm --entrypoint <command> <image> <args>`
+  - Git 2.52.0 adds ~12MB to image (includes libcurl, pcre2, and related dependencies)
+---
+

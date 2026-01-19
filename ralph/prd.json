@@ -13,8 +13,8 @@
         "git --version runs successfully inside container"
       ],
       "priority": 1,
-      "passes": false,
-      "notes": "BLOCKER: Claude Code requires git for Anthropic marketplace features"
+      "passes": true,
+      "notes": ""
     },
     {
       "id": "US-005",
