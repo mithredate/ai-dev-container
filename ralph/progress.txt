@@ -2,7 +2,21 @@
 Started: Mon Jan 19 2026
 
 ## Codebase Patterns
-(To be filled in during first iteration)
+- Use `COPY --chmod=755` in Dockerfile to set script permissions in a single layer
+- Shell scripts use `#!/bin/sh` with `shellcheck shell=dash` directive for POSIX compatibility
+- Scripts log to stderr with a prefix like `[scriptname]` for visibility
 
+---
+
+## 2026-01-19 - US-001
+Thread: N/A (first iteration)
+- Created `/scripts/entrypoint.sh` wrapper script
+- Script uses `exec claude "$@"` to replace shell process with Claude CLI
+- Logs startup message to stderr for visibility
+- Files changed: `scripts/entrypoint.sh` (new)
+- **Learnings for future iterations:**
+  - Existing `scripts/bridge` provides good template for shell script style
+  - No package.json or Makefile - quality checks limited to shellcheck (not installed locally)
+  - Docker daemon not running on host, so image builds can't be tested locally
 ---
 
