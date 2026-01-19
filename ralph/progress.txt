@@ -164,3 +164,18 @@ Thread: N/A
   - Use `docker history --no-trunc` to analyze layer sizes
 ---
 
+## 2026-01-19 - US-011
+Thread: N/A
+- Updated examples/claude-bridge.yaml with comprehensive path mapping documentation
+- Added 'paths' field documentation to command schema description
+- Added Path Mapping section explaining when and why path mappings are needed
+- Added paths configuration to PHP commands: /workspace → /var/www/html
+- Added paths configuration to Node.js commands: /workspace → /app
+- Added usage examples section showing path translation in action
+- Files changed: `examples/claude-bridge.yaml` (modified)
+- **Learnings for future iterations:**
+  - YAML examples are documentation - include clear comments explaining the "why" not just the "how"
+  - Show multiple container types (PHP, Node) to demonstrate the pattern applies broadly
+  - Include concrete examples of path translation to make the feature understandable
+---
+
