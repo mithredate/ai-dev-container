@@ -4,63 +4,6 @@
   "description": "Docker Volume Auth + Claude Code Viewer - Named volume for credentials and web UI for monitoring sessions",
   "userStories": [
     {
-      "id": "US-004",
-      "title": "Install Git in Container",
-      "description": "As a user running Claude Code inside the container, I want git installed so that Claude Code can perform version control operations.",
-      "acceptanceCriteria": [
-        "Add git to apk add command in Dockerfile",
-        "Container build succeeds with docker compose build claude",
-        "git --version runs successfully inside container"
-      ],
-      "priority": 1,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-005",
-      "title": "Set SHELL Environment Variable",
-      "description": "As a user running Claude Code inside the container, I want the SHELL environment variable set so that Claude Code's Bash tool works.",
-      "acceptanceCriteria": [
-        "Add ENV SHELL=/bin/sh to Dockerfile",
-        "Container build succeeds",
-        "echo $SHELL returns /bin/sh inside container",
-        "Claude Code Bash tool executes commands without 'No suitable shell found' error"
-      ],
-      "priority": 2,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-001",
-      "title": "Replace bind mount with named volume in compose.yaml",
-      "description": "As a developer, I want Claude credentials stored in a Docker volume so that authentication works regardless of host UID.",
-      "acceptanceCriteria": [
-        "Remove ~/.claude:/home/claude/.claude bind mount from compose.yaml",
-        "Add named volume 'claude-config' mapped to /home/claude/.claude",
-        "Define 'claude-config' in the volumes: section of compose.yaml",
-        "Container starts successfully with docker compose up -d",
-        "Volume is created with project-prefixed name (e.g., ai-dev-container_claude-config)"
-      ],
-      "priority": 3,
-      "passes": true,
-      "notes": ""
-    },
-    {
-      "id": "US-002",
-      "title": "Update README with first-run authentication instructions",
-      "description": "As a new user, I want clear instructions on how to authenticate Claude on first run so I can get started quickly.",
-      "acceptanceCriteria": [
-        "README explains that authentication is per-project and stored in a Docker volume",
-        "README documents the first-run workflow: docker compose up -d then docker attach claude",
-        "README explains that Claude's init script will guide through setup (colors, auth, etc.)",
-        "README notes that subsequent runs will use cached credentials from the volume",
-        "Remove any references to mounting ~/.claude from host"
-      ],
-      "priority": 4,
-      "passes": true,
-      "notes": ""
-    },
-    {
       "id": "US-006",
       "title": "Add Claude Code Viewer service to compose.yaml",
       "description": "As a developer, I want a web-based viewer service so I can monitor Claude sessions in real-time and review historical logs.",
@@ -74,7 +17,7 @@
         "Viewer accessible at http://localhost:<port> and shows Claude sessions",
         "Typecheck passes"
       ],
-      "priority": 5,
+      "priority": 1,
       "passes": false,
       "notes": ""
     },
@@ -88,7 +31,7 @@
         "README documents the VIEWER_PORT environment variable for customization",
         "README mentions key features: real-time monitoring, session search, log viewing"
       ],
-      "priority": 6,
+      "priority": 2,
       "passes": false,
       "notes": ""
     },
@@ -101,7 +44,7 @@
         "Add VIEWER_PORT=3000 with comment explaining its purpose",
         "Add any other relevant environment variables for the viewer"
       ],
-      "priority": 7,
+      "priority": 3,
       "passes": false,
       "notes": ""
     },
@@ -114,7 +57,7 @@
         "Command provided: docker volume rm <project>_claude-config",
         "Notes that this will require going through Claude init again"
       ],
-      "priority": 8,
+      "priority": 4,
       "passes": false,
       "notes": ""
     }
