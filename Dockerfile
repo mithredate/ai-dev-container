@@ -20,8 +20,9 @@ FROM node:20-alpine AS runtime
 
 # Install only essential runtime dependencies:
 # - docker-cli: Docker client for container communication (no daemon)
+# - git: Required for Claude Code version control operations
 # Multi-stage build ensures Go compiler and build tools are not included
-RUN apk add --no-cache docker-cli=29.1.3-r1 && \
+RUN apk add --no-cache docker-cli=29.1.3-r1 git && \
     rm -rf /var/cache/apk/*
 
 # Install claude-code CLI globally and clean npm artifacts
