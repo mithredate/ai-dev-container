@@ -54,6 +54,8 @@ services:
     environment:
       # Set CLAUDE_YOLO=1 to enable --dangerously-skip-permissions mode
       - CLAUDE_YOLO=${CLAUDE_YOLO:-0}
+      # Enable bridge wrappers to route commands to sidecar containers
+      - BRIDGE_ENABLED=1
       # Point bridge to the config file
       - BRIDGE_CONFIG=/workspace/.claude/bridge.yaml
       # Docker host via socket proxy for secure, limited Docker access
