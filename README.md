@@ -25,9 +25,12 @@ services:
     image: claude-brain-sidecar:latest
     depends_on:
       - socket-proxy
+    stdin_open: true
+    tty: true
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      BRIDGE_ENABLED: "1"
     volumes:
       - .:/workspace
 ```
@@ -35,7 +38,14 @@ services:
 Then run:
 
 ```bash
-docker-compose run claude
+docker compose up claude
+```
+
+Claude starts automatically via the entrypoint script. To run in detached mode with attach:
+
+```bash
+docker compose up -d claude
+docker attach <container-name>
 ```
 
 ## How It Works
@@ -127,6 +137,51 @@ bridge composer require foo/bar   # Install composer package
 | `container` | Yes | Logical container name |
 | `exec` | Yes | Command to execute in container |
 | `workdir` | No | Working directory inside container |
+| `paths` | No | Path mappings (source → dest) for argument translation |
+
+### Command Key Naming Convention
+
+When using wrapper scripts for automatic command routing, the command key in `bridge.yaml` must match the wrapper script name exactly:
+
+| Command Key | Wrapper Script | Description |
+|-------------|----------------|-------------|
+| `go` | `/scripts/wrappers/go` | Go compiler |
+| `gofmt` | `/scripts/wrappers/gofmt` | Go code formatter |
+| `php` | `/scripts/wrappers/php` | PHP interpreter |
+| `composer` | `/scripts/wrappers/composer` | PHP package manager |
+| `node` | `/scripts/wrappers/node` | Node.js runtime |
+| `npm` | `/scripts/wrappers/npm` | Node.js package manager |
+| `npx` | `/scripts/wrappers/npx` | Node.js package runner |
+
+Example configuration:
+
+```yaml
+commands:
+  go:
+    container: golang
+    exec: go
+    workdir: /workspace
+  gofmt:
+    container: golang
+    exec: gofmt
+    workdir: /workspace
+```
+
+### BRIDGE_ENABLED Environment Variable
+
+The `BRIDGE_ENABLED` environment variable controls wrapper script behavior:
+
+| Value | Behavior |
+|-------|----------|
+| `BRIDGE_ENABLED=1` | Commands route through the bridge to sidecar containers |
+| Not set or `0` | Commands execute locally (passthrough mode) |
+
+When `BRIDGE_ENABLED=1` is set, running `go build` in the Claude container will automatically:
+1. Invoke the `/scripts/wrappers/go` wrapper
+2. Look up the `go` command in `bridge.yaml`
+3. Execute the command in the configured sidecar container
+
+When not set, wrapper scripts fall back to local binaries, allowing the container to work standalone.
 
 ## Session Persistence
 
@@ -214,12 +269,18 @@ See the `examples/` directory for:
 docker build -t claude-brain-sidecar .
 ```
 
-The image is built on Alpine Linux and includes:
-- Node.js 20 LTS
-- Claude Code CLI
-- Docker CLI (client only)
-- yq YAML parser
-- Bridge script
+The image uses a multi-stage build:
+
+1. **Go builder stage**: Compiles the bridge binary using `golang:1.24-alpine`
+   - Bridge is compiled with `CGO_ENABLED=0` for a static binary
+   - Binary is stripped with `-ldflags="-s -w"` to reduce size
+
+2. **Runtime stage**: Based on `node:20-alpine` and includes:
+   - Node.js 20 LTS
+   - Claude Code CLI
+   - Docker CLI (client only)
+   - Go bridge binary (compiled from source)
+   - Wrapper scripts for automatic command routing
 
 ## Requirements
 
