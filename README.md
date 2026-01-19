@@ -1,5 +1,7 @@
 # Claude Brain Sidecar
 
+[![Build and Publish Docker Image](https://github.com/mithredate/ai-dev-container/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mithredate/ai-dev-container/actions/workflows/docker-publish.yml)
+
 A lightweight Docker image containing Claude Code designed to be added as a service to any `docker-compose.yml`, delegating code execution to specialized sidecar containers via a secure Docker socket proxy.
 
 ## Quick Start
