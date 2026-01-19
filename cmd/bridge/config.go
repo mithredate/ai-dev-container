@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -23,9 +24,10 @@ type Config struct {
 
 // Command represents a command mapping configuration.
 type Command struct {
-	Container string `yaml:"container"`
-	Exec      string `yaml:"exec"`
-	Workdir   string `yaml:"workdir"`
+	Container string            `yaml:"container"`
+	Exec      string            `yaml:"exec"`
+	Workdir   string            `yaml:"workdir"`
+	Paths     map[string]string `yaml:"paths"`
 }
 
 // LoadConfig reads and parses the bridge configuration file.
@@ -102,4 +104,46 @@ func (c *Config) ResolveContainer(name string) string {
 		}
 	}
 	return name
+}
+
+// TranslatePath translates a single path using the command's path mappings.
+// If the path starts with a mapped prefix, it is replaced with the target path.
+// If no mapping matches, the original path is returned unchanged.
+// Longer prefixes are matched first to handle nested mappings correctly.
+func (cmd *Command) TranslatePath(path string) string {
+	if len(cmd.Paths) == 0 {
+		return path
+	}
+
+	// Find the longest matching prefix for correct nested path handling
+	var longestPrefix string
+	var longestTarget string
+	for source, target := range cmd.Paths {
+		if strings.HasPrefix(path, source) {
+			if len(source) > len(longestPrefix) {
+				longestPrefix = source
+				longestTarget = target
+			}
+		}
+	}
+
+	if longestPrefix != "" {
+		return longestTarget + path[len(longestPrefix):]
+	}
+	return path
+}
+
+// TranslateArgs translates all path arguments using the command's path mappings.
+// Each argument is checked for mapped prefixes and translated if found.
+// Returns a new slice with translated arguments (original slice is not modified).
+func (cmd *Command) TranslateArgs(args []string) []string {
+	if len(cmd.Paths) == 0 {
+		return args
+	}
+
+	result := make([]string, len(args))
+	for i, arg := range args {
+		result[i] = cmd.TranslatePath(arg)
+	}
+	return result
 }
