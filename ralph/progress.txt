@@ -249,3 +249,16 @@ Thread: N/A
   - Always test passthrough mode when adding wrapper scripts to verify they don't break local binaries
 ---
 
+## 2026-01-19 - US-017
+Thread: N/A
+- Verified existing configuration already had correct container name mapping (ai-dev-container-golang)
+- Verified command keys (go, gofmt) already match wrapper script names
+- Added BRIDGE_ENABLED=1 environment variable to claude service in compose.yaml
+- This enables wrapper scripts to route commands to sidecar containers instead of passthrough mode
+- Quality checks pass: go build, go vet
+- Files changed: `compose.yaml` (modified)
+- **Learnings for future iterations:**
+  - BRIDGE_ENABLED=1 is the switch that activates wrapper routing - without it, wrappers fall back to local binaries
+  - Verify existing state before making changes - some acceptance criteria may already be satisfied
+---
+

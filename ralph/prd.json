@@ -257,8 +257,8 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Verified bridge.yaml container name already matches compose.yaml (ai-dev-container-golang). Command keys (go, gofmt) already match wrapper scripts. Added BRIDGE_ENABLED=1 to claude service environment."
     },
     {
       "id": "US-018",
