@@ -262,3 +262,20 @@ Thread: N/A
   - Verify existing state before making changes - some acceptance criteria may already be satisfied
 ---
 
+## 2026-01-19 - US-018
+Thread: N/A
+- Updated README.md documentation with all new features
+- Quick Start section: changed to `docker compose up claude` (auto-start via entrypoint)
+- Added stdin_open and tty to Quick Start example for interactive sessions
+- Added BRIDGE_ENABLED=1 to Quick Start example
+- Added paths field to Command Entry Fields table
+- Added new "Command Key Naming Convention" section with wrapper script mapping table
+- Added new "BRIDGE_ENABLED Environment Variable" section explaining passthrough vs bridge mode
+- Building section: replaced yq YAML parser with Go multi-stage build documentation
+- Quality checks pass: go build, go vet
+- Files changed: `README.md` (modified)
+- **Learnings for future iterations:**
+  - YOLO mode section already existed and was adequate - check for existing documentation before adding
+  - README updates are straightforward text changes - no complex logic involved
+---
+
