@@ -74,6 +74,8 @@ services:
     environment:
       # Connect to Docker via the socket proxy
       DOCKER_HOST: tcp://socket-proxy:2375
+      # Enable bridge wrappers to route commands to sidecar containers
+      BRIDGE_ENABLED: "1"
       # Required: Your Anthropic API key
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
       # ⚠️  YOLO Mode (Optional - DANGEROUS)
@@ -91,16 +93,29 @@ services:
     volumes:
       # Mount your project at /workspace (Claude's working directory)
       - .:/workspace
-      # Session persistence: keeps authentication and settings across container restarts
-      # This is optional - Claude will work without it but you'll need to re-authenticate each time
-      # The .claude directory stores:
-      #   - Authentication tokens
-      #   - User preferences/settings
-      #   - Session state
-      - ./.claude:/home/claude/.claude
+      # Named volume for Claude session persistence (per-project)
+      # Credentials persist across container restarts without UID mismatch issues
+      - claude-config:/home/claude/.claude
     stdin_open: true
     tty: true
     # Run interactively: docker-compose run claude
+
+  # ===========================================
+  # Claude Code Viewer (Optional)
+  # ===========================================
+  # Web UI for monitoring Claude sessions in real-time
+  # Access at http://localhost:3000 (or VIEWER_PORT if customized)
+  viewer:
+    image: node:20-alpine
+    command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
+    environment:
+      PORT: ${VIEWER_PORT:-3000}
+    ports:
+      - "${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}"
+    volumes:
+      # Mount claude-config volume to access session logs (npx runs as root)
+      - claude-config:/root/.claude
+    restart: unless-stopped
 
   # ===========================================
   # Example Application Containers
@@ -134,6 +149,8 @@ services:
       - db-data:/var/lib/postgresql/data
 
 volumes:
+  # Per-project Claude config volume (stores credentials, settings, session logs)
+  claude-config:
   db-data:
 
 # Networks (optional - using default bridge network)

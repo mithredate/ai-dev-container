@@ -33,6 +33,10 @@ services:
       BRIDGE_ENABLED: "1"
     volumes:
       - .:/workspace
+      - claude-config:/home/claude/.claude
+
+volumes:
+  claude-config:
 ```
 
 Then run:
