@@ -1,26 +1,36 @@
 ---
 name: ralph
-description: "Convert PRDs to prd.json format for the Ralph autonomous agent system. Use when you have an existing PRD and need to convert it to Ralph's JSON format. Triggers on: convert this prd, turn this into ralph format, create prd.json from this, ralph json."
+description: "Convert PRDs to prd.json format for the Ralph autonomous agent system. Use when you have an existing PRD and need to convert it to Ralph's JSON format, OR when you need to cleanup completed stories. Triggers on: convert this prd, turn this into ralph format, create prd.json from this, ralph json, cleanup prd, archive completed stories."
 ---
 
 # Ralph PRD Converter
 
-Converts existing PRDs to the prd.json format that Ralph uses for autonomous execution.
+Converts existing PRDs to the prd.json format that Ralph uses for autonomous execution. Also handles cleanup of completed stories.
 
 ---
 
 ## The Job
 
-Take a PRD (markdown file or text) and convert it to `prd.json` in your ralph directory.
+**Convert mode:** Take a PRD (markdown file or text) and append stories to `prd.json` in your ralph directory.
+
+**Cleanup mode:** Archive completed stories (`passes: true`) from prd.json.
 
 ---
 
 ## Output Format
 
+**Branch name prefixes:**
+- `feat/` - new feature
+- `fix/` - bug fix
+- `chore/` - maintenance, config, dependencies
+- `refactor/` - code restructuring
+- `docs/` - documentation only
+- `test/` - adding/updating tests
+
 ```json
 {
   "project": "[Project Name]",
-  "branchName": "ralph/[feature-name-kebab-case]",
+  "branchName": "[type]/[short-description-kebab-case]",
   "description": "[Feature description from PRD title/intro]",
   "userStories": [
     {
@@ -118,11 +128,115 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 ## Conversion Rules
 
 1. **Each user story becomes one JSON entry**
-2. **IDs**: Sequential (US-001, US-002, etc.)
-3. **Priority**: Based on dependency order, then document order
-4. **All stories**: `passes: false` and empty `notes`
-5. **branchName**: Derive from feature name, kebab-case, prefixed with `ralph/`
+2. **IDs**: Continue from existing stories (see "Adding to Existing prd.json" below)
+3. **Priority**: Recalculate for ALL stories based on dependency order
+4. **New stories**: `passes: false` and empty `notes`
+5. **branchName**: Use conventional prefix (`feat/`, `fix/`, `chore/`, `refactor/`, `docs/`, `test/`) + short description in kebab-case
 6. **Always add**: "Typecheck passes" to every story's acceptance criteria
+
+---
+
+## Adding to Existing prd.json
+
+**IMPORTANT: Always read existing prd.json before writing new stories.**
+
+### Steps:
+
+1. **Read existing prd.json** if it exists
+2. **Find the highest story ID** (e.g., if US-007 exists, next is US-008)
+3. **Keep all existing stories** - do not remove or modify them
+4. **Append new stories** with IDs continuing the sequence
+5. **Reprioritize ALL stories** (existing + new) based on dependency order
+
+### ID Sequencing Example:
+
+**Existing prd.json has:**
+- US-001, US-002, US-003
+
+**New PRD adds 2 stories:**
+- New story 1 → US-004
+- New story 2 → US-005
+
+### Priority Recalculation:
+
+When adding new stories, analyze dependencies across ALL stories (existing + new) and reassign priorities:
+
+1. List all stories (existing + new)
+2. Build dependency graph (which stories depend on which)
+3. Assign priorities so no story depends on a higher-priority story
+4. Stories with `passes: true` should generally keep lower priorities (they're done)
+
+**Example:**
+- Existing US-001 (passes: true, priority: 1) - schema change
+- Existing US-002 (passes: false, priority: 2) - uses schema
+- New US-003 - new schema change (must run before US-002)
+
+After reprioritization:
+- US-001: priority 1 (done, schema)
+- US-003: priority 2 (new schema, must run before US-002)
+- US-002: priority 3 (depends on both schemas)
+
+---
+
+## Cleanup Mode
+
+When the user asks to **cleanup** or **archive completed stories**, follow these steps:
+
+### Trigger phrases:
+- "cleanup prd"
+- "archive completed stories"
+- "remove passed stories"
+
+### Cleanup Steps:
+
+1. **Read current prd.json**
+2. **Identify stories with `passes: true`**
+3. **Archive them:**
+   - Create archive folder: `archive/YYYY-MM-DD-cleanup/`
+   - Save completed stories to `archive/YYYY-MM-DD-cleanup/completed-stories.json`
+   - Copy current `progress.txt` to archive
+4. **Update prd.json:**
+   - Remove all stories with `passes: true`
+   - Keep all stories with `passes: false`
+   - Recalculate priorities for remaining stories (1, 2, 3, ...)
+5. **Reset progress.txt** with fresh header
+
+### Cleanup Example:
+
+**Before cleanup (prd.json):**
+```json
+{
+  "userStories": [
+    {"id": "US-001", "passes": true, "priority": 1},
+    {"id": "US-002", "passes": true, "priority": 2},
+    {"id": "US-003", "passes": false, "priority": 3},
+    {"id": "US-004", "passes": false, "priority": 4}
+  ]
+}
+```
+
+**After cleanup (prd.json):**
+```json
+{
+  "userStories": [
+    {"id": "US-003", "passes": false, "priority": 1},
+    {"id": "US-004", "passes": false, "priority": 2}
+  ]
+}
+```
+
+**Archived (completed-stories.json):**
+```json
+{
+  "archivedAt": "2024-01-15",
+  "stories": [
+    {"id": "US-001", "passes": true, "priority": 1},
+    {"id": "US-002", "passes": true, "priority": 2}
+  ]
+}
+```
+
+Note: Story IDs are NOT renumbered during cleanup - US-003 stays US-003. Only priorities are recalculated.
 
 ---
 
@@ -164,7 +278,7 @@ Add ability to mark tasks with different statuses.
 ```json
 {
   "project": "TaskApp",
-  "branchName": "ralph/task-status",
+  "branchName": "feat/task-status",
   "description": "Task Status Feature - Track task progress with status indicators",
   "userStories": [
     {
@@ -248,10 +362,13 @@ Add ability to mark tasks with different statuses.
 
 Before writing prd.json, verify:
 
+- [ ] **Read existing prd.json first** (if it exists)
+- [ ] **Story IDs continue from highest existing ID** (not starting from US-001)
 - [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
 - [ ] Each story is completable in one iteration (small enough)
+- [ ] **All priorities recalculated** based on dependencies (existing + new stories)
 - [ ] Stories are ordered by dependency (schema to backend to UI)
 - [ ] Every story has "Typecheck passes" as criterion
 - [ ] UI stories have "Verify in browser using dev-browser skill" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
-- [ ] No story depends on a later story
+- [ ] No story depends on a higher-priority story
