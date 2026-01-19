@@ -229,8 +229,8 @@
         "Typecheck passes"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Created 7 wrapper scripts in scripts/wrappers/ (go, gofmt, php, composer, node, npm, npx). Each checks BRIDGE_ENABLED=1 to route via bridge, otherwise falls back to local binary."
     },
     {
       "id": "US-016",

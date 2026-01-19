@@ -215,3 +215,20 @@ Thread: N/A
   - CONTAINERS=1 enables container inspection, EXEC=1 enables exec, POST=1 enables write operations
 ---
 
+## 2026-01-19 - US-015
+Thread: N/A
+- Created wrapper scripts in scripts/wrappers/ for 7 commands: go, gofmt, php, composer, node, npm, npx
+- Each wrapper follows the BRIDGE_ENABLED pattern:
+  - If BRIDGE_ENABLED=1: exec bridge <command> "$@"
+  - If not set: fall back to local binary using known paths
+- Passthrough mode searches /usr/local/bin and /usr/bin for the real binary
+- Scripts use POSIX sh with shellcheck shell=dash directive
+- All scripts set to executable (chmod +x)
+- Quality checks pass: sh -n (syntax), go build, go vet
+- Files changed: `scripts/wrappers/go` (new), `scripts/wrappers/gofmt` (new), `scripts/wrappers/php` (new), `scripts/wrappers/composer` (new), `scripts/wrappers/node` (new), `scripts/wrappers/npm` (new), `scripts/wrappers/npx` (new)
+- **Learnings for future iterations:**
+  - Wrapper scripts use exit code 127 when command not found (standard shell convention)
+  - Passthrough searches specific paths rather than relying on PATH to avoid infinite recursion
+  - Using `command -v` to get wrapper's own path allows comparing against real binary paths
+---
+
