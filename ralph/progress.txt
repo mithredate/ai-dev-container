@@ -119,3 +119,15 @@
   - Document what gets persisted in volume (auth tokens, settings, session state) in compose comments
   - The hadolint command via input redirection may be blocked; use volume mount instead
 ---
+
+## 2026-01-19 - US-011
+- What was implemented: Added YOLO mode environment variable support to docker-compose examples with comprehensive security documentation
+- Files changed:
+  - examples/docker-compose.yml (modified - added CLAUDE_YOLO env var with security warnings)
+  - examples/compose.yml (modified - added CLAUDE_YOLO env var with security warnings)
+- **Learnings for future iterations:**
+  - YOLO mode (CLAUDE_YOLO=1) disables confirmation prompts in Claude Code
+  - Security-sensitive features should be commented out by default (safe mode)
+  - Include explicit warnings about destructive commands (rm -rf, DROP TABLE, etc.)
+  - Documentation should emphasize "isolated development environments only"
+---
