@@ -1,0 +1,49 @@
+# Docker Compose v2 configuration for ai-dev-container
+# =====================================================
+# This compose file sets up:
+#   1. claude: The main Claude Code container (built from local Dockerfile)
+#   2. golang: A Go sidecar container for running go commands via bridge
+#
+# Usage:
+#   docker compose up -d      # Start all services
+#   docker compose exec claude claude  # Enter Claude interactively (if not using YOLO)
+#
+# For development on this project, this allows Claude to run go commands
+# (go build, go test, go vet, etc.) in the golang sidecar container.
+
+services:
+  # Main Claude Code container
+  claude:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ai-dev-container-claude
+    stdin_open: true
+    tty: true
+    environment:
+      # Set CLAUDE_YOLO=1 to enable --dangerously-skip-permissions mode
+      - CLAUDE_YOLO=${CLAUDE_YOLO:-0}
+      # Point bridge to the config file
+      - BRIDGE_CONFIG=/workspace/.claude/bridge.yaml
+      # Docker host for bridge to communicate with sidecar containers
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      # Mount current project directory as workspace
+      - .:/workspace
+      # Mount ~/.claude for Claude session persistence and config
+      - ~/.claude:/home/claude/.claude
+      # Docker socket for bridge to exec into sidecar containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - golang
+    working_dir: /workspace
+
+  # Go sidecar container for running go commands
+  golang:
+    image: golang:1.24-alpine
+    container_name: ai-dev-container-golang
+    command: ["sleep", "infinity"]
+    volumes:
+      # Mount current project directory (same as claude container)
+      - .:/workspace
+    working_dir: /workspace
