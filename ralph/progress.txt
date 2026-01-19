@@ -94,3 +94,16 @@ Thread: N/A
   - Connect stdin/stdout/stderr directly to subprocess for real-time streaming
 ---
 
+## 2026-01-19 - US-007
+Thread: N/A
+- Implemented real-time output streaming in Go bridge
+- Added `golang.org/x/term` dependency for TTY detection
+- TTY allocated (-t flag) when both stdin and stdout are terminals
+- Real-time streaming already worked via direct os.Stdin/Stdout/Stderr assignment
+- Files changed: `cmd/bridge/main.go` (modified), `go.mod` (modified), `go.sum` (modified)
+- **Learnings for future iterations:**
+  - Use `golang.org/x/term.IsTerminal(int(os.Stdin.Fd()))` to detect terminal
+  - Docker exec needs both `-i` (interactive) and `-t` (TTY) for full terminal experience
+  - Go's os.Stdout/Stderr are unbuffered - direct assignment provides real-time streaming
+---
+
