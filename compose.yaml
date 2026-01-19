@@ -63,8 +63,8 @@ services:
     volumes:
       # Mount current project directory as workspace
       - .:/workspace
-      # Mount ~/.claude for Claude session persistence and config
-      - ~/.claude:/home/claude/.claude
+      # Named volume for Claude session persistence and config (per-project)
+      - claude-config:/home/claude/.claude
     depends_on:
       - socket-proxy
       - golang
@@ -79,3 +79,8 @@ services:
       # Mount current project directory (same as claude container)
       - .:/workspace
     working_dir: /workspace
+
+# Named volumes for persistent storage
+volumes:
+  # Per-project Claude config volume (stores credentials, settings, etc.)
+  claude-config:
