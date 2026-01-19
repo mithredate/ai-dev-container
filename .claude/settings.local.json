@@ -12,7 +12,11 @@
       "Bash(docker run)",
       "Bash(docker run:*)",
       "Bash(docker build)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(go build:*)",
+      "Bash(go vet:*)",
+      "Bash(go mod tidy:*)",
+      "Bash(./bridge:*)"
     ]
   }
 }
