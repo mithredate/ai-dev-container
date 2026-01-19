@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# npm wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge npm "$@"
+else
+    # Find the real npm binary (skip this wrapper)
+    SELF=$(command -v npm)
+    for BIN in /usr/local/bin/npm /usr/bin/npm; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: npm not found (BRIDGE_ENABLED not set and no local npm installation)" >&2
+    exit 127
+fi

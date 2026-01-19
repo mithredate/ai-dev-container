@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Node wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge node "$@"
+else
+    # Find the real node binary (skip this wrapper)
+    SELF=$(command -v node)
+    for BIN in /usr/local/bin/node /usr/bin/node; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: node not found (BRIDGE_ENABLED not set and no local node installation)" >&2
+    exit 127
+fi

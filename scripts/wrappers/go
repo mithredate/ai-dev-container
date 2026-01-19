@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# Go wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge go "$@"
+else
+    # Find the real go binary (skip this wrapper)
+    SELF=$(command -v go)
+    for BIN in /usr/local/go/bin/go /usr/bin/go; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: go not found (BRIDGE_ENABLED not set and no local go installation)" >&2
+    exit 127
+fi
