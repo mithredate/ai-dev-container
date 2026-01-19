@@ -214,8 +214,8 @@
         "Typecheck passes"
       ],
       "priority": 14,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Added socket-proxy service with tecnativa/docker-socket-proxy. Configured with CONTAINERS=1, EXEC=1, POST=1. Docker socket mounted read-only to socket-proxy only. Claude service updated to use DOCKER_HOST=tcp://socket-proxy:2375."
     },
     {
       "id": "US-015",

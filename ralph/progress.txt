@@ -197,3 +197,21 @@ Thread: N/A
   - Container names in compose.yaml must match the containers section in bridge.yaml
 ---
 
+## 2026-01-19 - US-014
+Thread: N/A
+- Added socket-proxy service using tecnativa/docker-socket-proxy to compose.yaml
+- Configured socket-proxy with minimal permissions:
+  - CONTAINERS=1, EXEC=1, POST=1 (required for docker exec)
+  - All other Docker API endpoints disabled (IMAGES=0, NETWORKS=0, etc.)
+- Docker socket mounted read-only to socket-proxy only (not to claude container)
+- Updated claude service:
+  - Changed DOCKER_HOST from unix socket to tcp://socket-proxy:2375
+  - Removed direct docker.sock volume mount
+  - Added depends_on socket-proxy
+- Files changed: `compose.yaml` (modified)
+- **Learnings for future iterations:**
+  - tecnativa/docker-socket-proxy uses port 2375 for TCP Docker API
+  - Socket should be mounted read-only (:ro) to the proxy for security
+  - CONTAINERS=1 enables container inspection, EXEC=1 enables exec, POST=1 enables write operations
+---
+
