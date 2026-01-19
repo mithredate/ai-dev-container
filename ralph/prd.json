@@ -124,8 +124,8 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Implementation completed as part of US-006"
     },
     {
       "id": "US-009",

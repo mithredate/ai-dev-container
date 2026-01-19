@@ -107,3 +107,19 @@ Thread: N/A
   - Go's os.Stdout/Stderr are unbuffered - direct assignment provides real-time streaming
 ---
 
+## 2026-01-19 - US-008
+Thread: N/A
+- Verified exit code propagation implementation (was completed in US-006)
+- Exit code behavior verified:
+  - `--help` and `--version` return exit code 0
+  - Missing command returns exit code 1
+  - Missing/invalid config returns exit code 1
+  - exec.ExitError extracts and returns docker exec exit codes
+- Quality checks passed: `go build` and `go vet`
+- No code changes needed - all acceptance criteria already satisfied
+- Files changed: None (verification only)
+- **Learnings for future iterations:**
+  - Exit code handling via exec.ExitError was implemented alongside command routing in US-006
+  - Build artifacts (bridge binary) in root should be gitignored - current pattern `./bridge` may need updating to `bridge`
+---
+
