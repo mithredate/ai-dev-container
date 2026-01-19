@@ -32,7 +32,7 @@
         "README mentions key features: real-time monitoring, session search, log viewing"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -45,7 +45,7 @@
         "Add any other relevant environment variables for the viewer"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {
@@ -58,7 +58,7 @@
         "Notes that this will require going through Claude init again"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": ""
     }
   ]

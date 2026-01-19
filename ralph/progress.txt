@@ -26,3 +26,15 @@ Started: Sun Jan 19 2026
   - Viewer successfully found 1 project and 3 sessions after proper volume mount
 ---
 
+## 2026-01-19 - US-007, US-003, US-008
+- What was implemented:
+  - US-007: Verified README already has Claude Code Viewer documentation (features, access URL, VIEWER_PORT)
+  - US-003: Verified README already has re-authentication documentation (volume deletion command)
+  - US-008: Created .env.example with VIEWER_PORT and CLAUDE_YOLO configuration
+- Files changed: .env.example (new file), ralph/prd.json, ralph/progress.txt
+- **Learnings for future iterations:**
+  - Multiple stories can be implemented/verified in a single iteration if they're all documentation-related
+  - Check if acceptance criteria are already satisfied before implementing - previous iterations may have completed work
+  - .env.example should document all user-configurable environment variables from compose.yaml
+---
+

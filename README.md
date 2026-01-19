@@ -222,6 +222,34 @@ docker volume rm ai-dev-container_claude-config
 
 Replace `ai-dev-container` with your project's directory name. After deletion, the next container start will trigger the first-run setup flow again.
 
+## Claude Code Viewer
+
+The Claude Code Viewer is a web-based interface for monitoring Claude sessions in real-time and reviewing historical logs. It runs as a separate service in the Docker Compose setup.
+
+### Features
+
+- **Real-time monitoring**: Watch Claude sessions as they happen
+- **Session search**: Find specific sessions by project or content
+- **Log viewing**: Review detailed session logs and conversation history
+
+### Accessing the Viewer
+
+The viewer is accessible at [http://localhost:3000](http://localhost:3000) by default when running with `docker compose up -d`.
+
+To use a different port, set the `VIEWER_PORT` environment variable:
+
+```bash
+VIEWER_PORT=8080 docker compose up -d
+```
+
+Or add it to your `.env` file:
+
+```
+VIEWER_PORT=8080
+```
+
+The viewer reads session data from the same `claude-config` volume used by the Claude container, so it automatically has access to all session logs.
+
 ## Security Best Practices
 
 ### Socket Proxy Configuration
