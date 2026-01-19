@@ -149,3 +149,23 @@
   - Include both correct and incorrect examples to make the guidance clear
   - Template placeholders like `[YOUR PROJECT NAME]` help users know what to customize
 ---
+
+## 2026-01-19 - US-013
+- What was implemented: Created README.md with comprehensive integration instructions
+- Files changed:
+  - README.md (created - 230 lines)
+- **README includes:**
+  - Quick start section with minimal docker-compose snippet (10 lines)
+  - Bridge configuration reference with YAML schema documentation
+  - Configuration reference tables for bridge.yaml fields
+  - Session persistence section
+  - Security best practices section with credential isolation warnings
+  - YOLO mode documentation with security warnings
+  - Examples directory reference
+  - Build instructions
+- **Learnings for future iterations:**
+  - Quick start should be minimal (5-10 lines) to lower barrier to adoption
+  - Security documentation should explicitly show what NOT to do (with code examples)
+  - Reference tables are helpful for configuration schemas
+  - Link to example files rather than duplicating content
+---
