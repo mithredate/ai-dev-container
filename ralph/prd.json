@@ -177,6 +177,21 @@
     },
     {
       "id": "US-012",
+      "title": "Create docker compose v2 file for this project",
+      "description": "As a user, I want to use the ai-dev-container tool to implement other tasks using Claude code.",
+      "acceptanceCriteria": [
+        "There is a compose.yaml file with proper setup",
+        "There's a golang image in the compose.yaml file to run go commands",
+        "claude-bridge.yaml configuration exists to make the go commands available to the bridge",
+        "~/.claude directory is mounted",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "Created compose.yaml with claude and golang services. Created .claude/bridge.yaml for go command routing."
+    },
+    {
+      "id": "US-013",
       "title": "Update documentation",
       "description": "As a user, I want updated documentation reflecting the new entrypoint and Go bridge so that I can use the image correctly.",
       "acceptanceCriteria": [
@@ -187,7 +202,7 @@
         "Update 'Building the Image' section to mention Go compilation",
         "Typecheck passes"
       ],
-      "priority": 12,
+      "priority": 13,
       "passes": false,
       "notes": ""
     }

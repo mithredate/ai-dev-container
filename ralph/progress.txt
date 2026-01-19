@@ -179,3 +179,21 @@ Thread: N/A
   - Include concrete examples of path translation to make the feature understandable
 ---
 
+## 2026-01-19 - US-012
+Thread: N/A
+- Created compose.yaml with Docker Compose v2 configuration
+- Added two services:
+  - claude: Main Claude Code container (built from local Dockerfile)
+  - golang: Go sidecar container (golang:1.24-alpine) for running go commands
+- Created .claude/bridge.yaml configuration for routing go commands to golang container
+- Volume mounts configured:
+  - Current directory → /workspace
+  - ~/.claude → /home/claude/.claude (session persistence)
+  - Docker socket for bridge communication
+- Files changed: `compose.yaml` (new), `.claude/bridge.yaml` (new)
+- **Learnings for future iterations:**
+  - Use `sleep infinity` as command for sidecar containers to keep them running
+  - BRIDGE_CONFIG env var points bridge to the config file location
+  - Container names in compose.yaml must match the containers section in bridge.yaml
+---
+
