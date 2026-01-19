@@ -48,6 +48,9 @@ ENV PATH="/scripts/wrappers:$PATH"
 # Configure Docker host (override via docker-compose or runtime env)
 ENV DOCKER_HOST=""
 
+# Set SHELL env var for Claude Code's Bash tool (Alpine uses /bin/sh)
+ENV SHELL=/bin/sh
+
 # Create non-root user 'claude' with session directory
 # Note: node:20-alpine already has node user/group at 1000, so we use 1001
 RUN addgroup -g 1001 claude && \
