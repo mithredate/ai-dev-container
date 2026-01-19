@@ -38,3 +38,24 @@ Started: Mon Jan 19 01:26:29 CET 2026
   - Use env vars at workflow level for reusable values like registry URL and image name
   - Permissions should be set at job level when using GITHUB_TOKEN for packages
 ---
+
+## 2026-01-19 - US-003
+- What was implemented:
+  - Added docker/metadata-action@v5 to generate dynamic image tags and labels
+  - Configured tagging strategy:
+    - `type=raw,value=latest,enable={{is_default_branch}}` for :latest tag on main
+    - `type=sha,prefix=sha-,format=short` for :sha-<short-sha> tag on all builds
+    - `type=semver,pattern={{version}}` for :1.2.3 tag on version tags
+    - `type=semver,pattern={{major}}.{{minor}}` for :1.2 tag on version tags
+    - `type=semver,pattern={{major}}` for :1 tag on version tags
+  - Added OCI labels: title, description (created date and revision are auto-added by metadata-action)
+  - Updated build-push-action to use `${{ steps.meta.outputs.tags }}` and `${{ steps.meta.outputs.labels }}`
+- Files changed:
+  - `.github/workflows/docker-publish.yml` (modified)
+- **Learnings for future iterations:**
+  - docker/metadata-action@v5 auto-generates OCI labels like created date, revision, source, etc.
+  - Use `id: meta` on the step to reference outputs in later steps via `${{ steps.meta.outputs.tags }}`
+  - `{{is_default_branch}}` is a built-in template for detecting pushes to main/master
+  - `type=sha` with `format=short` produces 7-character SHA prefixed with chosen prefix
+  - `type=semver` patterns are only applied when a semver tag triggers the workflow
+---
