@@ -131,3 +131,21 @@
   - Include explicit warnings about destructive commands (rm -rf, DROP TABLE, etc.)
   - Documentation should emphasize "isolated development environments only"
 ---
+
+## 2026-01-19 - US-012
+- What was implemented: Created CLAUDE.md.template for multi-container projects with comprehensive sections
+- Files changed:
+  - examples/CLAUDE.md.template (created - 207 lines)
+- **Template includes:**
+  - Project overview section with tech stack placeholders
+  - Container topology table with example containers
+  - Bridge command reference with PHP, Node.js, and database examples
+  - Testing commands section and testing strategy
+  - "Do Not" warnings section with multi-container gotchas
+  - Codebase patterns section for project-specific learnings
+- **Learnings for future iterations:**
+  - CLAUDE.md templates should include concrete command examples (not just descriptions)
+  - The "Do Not" section is critical for multi-container setups - prevents common mistakes
+  - Include both correct and incorrect examples to make the guidance clear
+  - Template placeholders like `[YOUR PROJECT NAME]` help users know what to customize
+---
