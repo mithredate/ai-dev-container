@@ -182,6 +182,23 @@ bridge psql -U myapp
 - The proxy limits Docker API access to safe operations only
 - Never mount `/var/run/docker.sock` directly to the Claude container
 
+### Do NOT mount sensitive host directories
+```yaml
+# NEVER mount these directories - exposes credentials to Claude
+volumes:
+  - ~/.ssh:/home/claude/.ssh        # SSH keys - DANGEROUS
+  - ~/.aws:/home/claude/.aws        # AWS credentials - DANGEROUS
+  - ~/.config:/home/claude/.config  # Config files - DANGEROUS
+  - ~:/home/claude/host             # Your home directory - VERY DANGEROUS
+
+# CORRECT - Only mount project directory and Claude session data
+volumes:
+  - .:/workspace                      # Your project (safe)
+  - ./.claude:/home/claude/.claude    # Claude session persistence (safe)
+```
+- Pass required credentials as environment variables instead
+- The Claude container should only access project files at `/workspace`
+
 ## Codebase Patterns
 
 [Add project-specific patterns here as you discover them]
