@@ -1,0 +1,35 @@
+# Git
+.git
+.github
+.gitignore
+
+# Environment files
+.env
+
+# Claude Code
+.claude
+CLAUDE.md
+
+# Compiled binary (rebuilt in Docker)
+bridge
+
+# Documentation
+README.md
+LICENSE
+
+# Project management
+ralph/
+
+# Examples (not needed in container)
+examples/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
