@@ -33,3 +33,8 @@ examples/
 # OS files
 .DS_Store
 Thumbs.db
+
+#Credentials
+.credentials.json
+*.credentials.json
+
