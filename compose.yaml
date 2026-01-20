@@ -66,6 +66,12 @@ services:
       - .:/workspace
       # Named volume for Claude session persistence and config (per-project)
       - claude-config:/home/claude/.claude
+      - claude-home:/home/claude/
+      # Mount credentials file extracted from host (macOS keychain or Linux ~/.claude/.credentials.json)
+      # See README for extraction instructions
+      - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
+      - /dev/null:/workspace/.env
+      - /dev/null:/workspace/.credentials.json
     depends_on:
       - socket-proxy
       - golang
@@ -101,3 +107,4 @@ services:
 volumes:
   # Per-project Claude config volume (stores credentials, settings, etc.)
   claude-config:
+  claude-home:

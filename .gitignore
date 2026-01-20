@@ -2,3 +2,6 @@ ralph/.last-branch
 
 /bridge
 .env
+
+# Claude credentials extracted from macOS keychain (sensitive)
+.credentials.json

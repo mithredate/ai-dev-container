@@ -96,6 +96,10 @@ services:
       # Named volume for Claude session persistence (per-project)
       # Credentials persist across container restarts without UID mismatch issues
       - claude-config:/home/claude/.claude
+      # Optional: Mount credentials extracted from host for MCP SSO support
+      # macOS: security find-generic-password -s "Claude Code-credentials" -w > .credentials.json
+      # Linux: cp ~/.claude/.credentials.json .credentials.json
+      # - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
     stdin_open: true
     tty: true
     # Run interactively: docker-compose run claude

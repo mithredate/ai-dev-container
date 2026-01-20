@@ -28,9 +28,12 @@ services:
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       BRIDGE_ENABLED: "1"
+      CLAUDE_YOLO: ${CLAUDE_YOLO:-0}
     volumes:
       - .:/workspace
       - claude-config:/home/claude/.claude
+      # Optional: For MCP SSO support (see Authentication section)
+      # - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
 
 volumes:
   claude-config:
@@ -88,6 +91,43 @@ docker volume rm <project>_claude-config
 
 Detach from container without stopping: `Ctrl+P` then `Ctrl+Q`
 
+### Sharing Host Credentials (Required for MCP SSO)
+
+Some MCP servers require OAuth/SSO authentication which needs localhost callback ports. Since containers can't expose random ports for OAuth callbacks, you must extract credentials from your host and mount them into the container.
+
+**macOS** (credentials stored in Keychain):
+
+```bash
+# Extract credentials from macOS Keychain to a local file
+security find-generic-password -s "Claude Code-credentials" -w > .credentials.json
+```
+
+**Linux** (credentials stored in file):
+
+```bash
+# Copy credentials file
+cp ~/.claude/.credentials.json .credentials.json
+```
+
+The `.credentials.json` file is already in `.gitignore` to prevent accidental commits. The compose file mounts this file read-only into the container at `/home/claude/.claude/.credentials.json`.
+
+**Best Practice: Shadow sensitive files in workspace**
+
+Since the entire project directory is mounted at `/workspace`, sensitive files like `.credentials.json` and `.env` would be readable by Claude. To prevent this, shadow them with `/dev/null` mounts:
+
+```yaml
+volumes:
+  - .:/workspace
+  - claude-config:/home/claude/.claude
+  # Mount credentials where Claude needs them
+  - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
+  # Shadow sensitive files in workspace so Claude can't read them
+  - /dev/null:/workspace/.credentials.json
+  - /dev/null:/workspace/.env
+```
+
+This ensures credentials are available at `/home/claude/.claude/.credentials.json` but hidden from `/workspace/` where Claude operates.
+
 ## Viewer (Optional)
 
 Web-based interface for monitoring Claude sessions and reviewing logs. Add to your `compose.yml`:
@@ -116,6 +156,7 @@ Access at [http://localhost:3000](http://localhost:3000) (or set `VIEWER_PORT` i
 
 - **Socket proxy** limits Claude to container list/exec operations only
 - **Never mount** sensitive directories (`~/.ssh`, `~/.aws`, `~/.config`)
+- **Shadow sensitive files** in workspace with `/dev/null` mounts (see [Sharing Host Credentials](#sharing-host-credentials-required-for-mcp-sso))
 - Pass credentials via environment variables only
 - Container runs as non-root user (`claude`, UID 1001)
 
