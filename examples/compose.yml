@@ -112,11 +112,13 @@ services:
     command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
     environment:
       PORT: ${VIEWER_PORT:-3000}
+      # Point viewer to the mounted claude data directory (read-only)
+      CCV_GLOBAL_CLAUDE_DIR: /claude-data
     ports:
       - "${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}"
     volumes:
-      # Mount claude-config volume to access session logs (npx runs as root)
-      - claude-config:/root/.claude
+      # Mount claude-config volume read-only at custom path to avoid permission conflicts
+      - claude-config:/claude-data:ro
     restart: unless-stopped
 
   # ===========================================
