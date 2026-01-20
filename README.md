@@ -20,7 +20,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   claude:
-    image: claude-brain-sidecar:latest
+    image: ghcr.io/mithredate/ai-dev-container:latest
     depends_on:
       - socket-proxy
     stdin_open: true
