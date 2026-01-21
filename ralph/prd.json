@@ -1,64 +1,142 @@
 {
   "project": "AI Dev Container",
-  "branchName": "ralph/docker-volume-auth",
-  "description": "Docker Volume Auth + Claude Code Viewer - Named volume for credentials and web UI for monitoring sessions",
+  "branchName": "feat/persistent-secure-container",
+  "description": "Persistent Secure Claude Container - Stay-alive container with configurable network isolation and on-demand Claude execution",
   "userStories": [
     {
-      "id": "US-006",
-      "title": "Add Claude Code Viewer service to compose.yaml",
-      "description": "As a developer, I want a web-based viewer service so I can monitor Claude sessions in real-time and review historical logs.",
+      "id": "US-009",
+      "title": "Persistent container with sleep entrypoint",
+      "description": "As a developer, I want the container to stay running so I can execute Claude multiple times without container restarts.",
       "acceptanceCriteria": [
-        "Add 'viewer' service to compose.yaml using node:20-alpine base image",
-        "Service runs npx @kimuson/claude-code-viewer@latest with --hostname 0.0.0.0",
-        "Service mounts claude-config volume to /home/node/.claude for session log access",
-        "Port configurable via VIEWER_PORT environment variable (default: 3000)",
-        "Port mapping uses ${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}",
-        "Container starts successfully with docker compose up -d",
-        "Viewer accessible at http://localhost:<port> and shows Claude sessions",
+        "Container entrypoint changed to `tail -f /dev/null` (keeps container alive)",
+        "Container stays running after `docker compose up -d`",
+        "`docker compose exec claude claude` starts Claude interactively",
+        "Ctrl+C exits Claude but container remains running",
+        "Can run Claude again with another `exec` command",
+        "Container only stops on explicit `docker compose down`",
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Volume mounted to /root/.claude since npx runs as root in alpine"
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "US-007",
-      "title": "Update README with viewer documentation",
-      "description": "As a developer, I want documentation on how to use the viewer so I can monitor Claude sessions effectively.",
+      "id": "US-010",
+      "title": "Install firewall dependencies in Alpine",
+      "description": "As a developer, I need the firewall tools available in the container image for network isolation.",
       "acceptanceCriteria": [
-        "README documents the viewer service and its purpose",
-        "README explains how to access the viewer (default: http://localhost:3000)",
-        "README documents the VIEWER_PORT environment variable for customization",
-        "README mentions key features: real-time monitoring, session search, log viewing"
+        "`iptables` package installed via apk",
+        "`ipset` package installed via apk",
+        "`iproute2` package installed (for `ip` command)",
+        "`bind-tools` package installed (for `dig` command)",
+        "`curl` available for fetching GitHub IP ranges",
+        "`jq` available for parsing JSON responses",
+        "Image builds successfully with new packages",
+        "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
-      "id": "US-008",
-      "title": "Add viewer configuration to .env.example",
-      "description": "As a developer, I want an example environment file showing viewer configuration options.",
+      "id": "US-011",
+      "title": "Create configurable firewall initialization script",
+      "description": "As a developer, I want network isolation with configurable allowed domains so each project can define its own network access rules.",
       "acceptanceCriteria": [
-        "Create .env.example if it doesn't exist",
-        "Add VIEWER_PORT=3000 with comment explaining its purpose",
-        "Add any other relevant environment variables for the viewer"
+        "`scripts/init-firewall.sh` script created and executable",
+        "Script reads allowed domains from `/workspace/.claude/allowed-domains.txt` if exists",
+        "Falls back to default domains: GitHub (dynamic), registry.npmjs.org, api.anthropic.com, sentry.io, statsig.anthropic.com, statsig.com",
+        "Script uses `ipset` for efficient IP matching",
+        "Script fetches GitHub IP ranges from api.github.com/meta",
+        "Script resolves domain names to IPs via `dig`",
+        "Allows localhost and DNS traffic",
+        "Preserves Docker internal DNS (127.0.0.11)",
+        "REJECTS (not drops) unauthorized traffic for fast feedback",
+        "Logs progress and errors clearly to stderr",
+        "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": ""
     },
     {
-      "id": "US-003",
-      "title": "Document re-authentication process",
-      "description": "As a user who needs to re-authenticate, I want to know how to reset my credentials.",
+      "id": "US-012",
+      "title": "Add firewall verification to init script",
+      "description": "As a developer, I want the firewall script to verify it works correctly after initialization.",
       "acceptanceCriteria": [
-        "README documents how to delete the volume to force re-authentication",
-        "Command provided: docker volume rm <project>_claude-config",
-        "Notes that this will require going through Claude init again"
+        "Script verifies it CAN reach api.github.com after setup",
+        "Script verifies it CANNOT reach example.com after setup",
+        "Script exits with error code if verification fails",
+        "Verification results logged clearly",
+        "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-013",
+      "title": "Docker Compose configuration for firewall",
+      "description": "As a developer, I want the firewall to initialize automatically when the container starts.",
+      "acceptanceCriteria": [
+        "compose.yaml includes `cap_add: [NET_ADMIN, NET_RAW]` for claude service",
+        "Entrypoint script runs firewall init as root before dropping to non-root user",
+        "Firewall persists for lifetime of container (not re-run on every exec)",
+        "Container starts successfully with `docker compose up -d`",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-014",
+      "title": "Configurable user UID/GID for workspace permissions",
+      "description": "As a developer, I want Claude to create files that I can edit on the host without permission errors.",
+      "acceptanceCriteria": [
+        "Dockerfile accepts `CLAUDE_UID` build arg (default: 501 for macOS)",
+        "Dockerfile accepts `CLAUDE_GID` build arg (default: 501 for macOS)",
+        "Container user created with configurable UID/GID",
+        "compose.yaml documents how to override for Linux (CLAUDE_UID=1000)",
+        "Claude can create new files in /workspace",
+        "Claude can edit existing files in /workspace",
+        "New files owned by configured UID on host",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-015",
+      "title": "Create example allowed-domains.txt",
+      "description": "As a developer, I want an example config file showing how to customize allowed domains.",
+      "acceptanceCriteria": [
+        "Create `.claude/allowed-domains.txt.example` in repo root",
+        "Example includes commented sections: GitHub, Package registries, Anthropic services, Custom domains",
+        "Format: one domain per line, # for comments",
+        "File clearly states it should be copied to `.claude/allowed-domains.txt`",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-016",
+      "title": "Update documentation with persistent container usage",
+      "description": "As a developer, I want clear instructions on how to use the new persistent container workflow.",
+      "acceptanceCriteria": [
+        "README documents `docker compose up -d` + `docker compose exec claude claude` workflow",
+        "README explains Ctrl+C behavior (exits Claude, not container)",
+        "README explains how to customize allowed domains",
+        "README shows example `.claude/allowed-domains.txt` format",
+        "README documents firewall behavior and default allowed domains",
+        "README explains UID configuration (default 501 for macOS, use 1000 for Linux)",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": false,
       "notes": ""
     }
   ]
