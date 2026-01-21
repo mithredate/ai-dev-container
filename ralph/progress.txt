@@ -23,3 +23,21 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - `CLAUDE_YOLO=1` enables `--dangerously-skip-permissions` mode
   - Container workflow: `docker compose up -d` then `docker compose exec claude claude`
 ---
+
+## 2026-01-21 14:30 UTC - US-010
+- **What was implemented**: Added firewall dependency packages to the Alpine container image
+- **Files changed**: `Dockerfile`
+- **Implementation details**:
+  - Added `iptables` package for firewall rules
+  - Added `ipset` package for efficient IP set matching
+  - Added `iproute2` package for `ip` command
+  - Added `bind-tools` package for `dig` DNS resolution command
+  - Added `curl` for fetching GitHub IP ranges from API
+  - Added `jq` for parsing JSON responses
+  - Reorganized apk command with one package per line for readability
+  - Added documentation comments explaining each package's purpose
+- **Learnings for future iterations**:
+  - Alpine packages needed for firewall: iptables, ipset, iproute2, bind-tools, curl, jq
+  - Docker build may not work in sandboxed environments due to network restrictions
+  - Quality checks (go vet/build) still work even when Docker is restricted
+---
