@@ -1,3 +1,25 @@
 # Ralph Progress Log
 Started: Wed Jan 21 14:07:23 CET 2026
+
+## Codebase Patterns
+- This is a Go project with Docker containerization for Claude Code
+- Quality checks: `go vet ./...` and `go build ./...`
+- Shell scripts in `/scripts/` use POSIX sh (dash compatible), not bash
+- The entrypoint uses `exec` to replace the shell process with the target command
+
+---
+
+## 2026-01-21 13:10 UTC - US-009
+- **What was implemented**: Persistent container entrypoint that keeps container alive with `tail -f /dev/null`
+- **Files changed**: `scripts/entrypoint.sh`
+- **Implementation details**:
+  - Changed default behavior: container now stays alive when no command provided
+  - Added `run_claude()` function for Claude CLI execution
+  - Added logic to detect `claude` as first argument and run Claude
+  - Any other command is executed directly via `exec "$@"`
+  - Default (no args) runs `tail -f /dev/null` to keep container alive
+- **Learnings for future iterations**:
+  - The entrypoint uses `CLAUDE_STARTING=1` env var for the node wrapper
+  - `CLAUDE_YOLO=1` enables `--dangerously-skip-permissions` mode
+  - Container workflow: `docker compose up -d` then `docker compose exec claude claude`
 ---
