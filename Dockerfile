@@ -68,10 +68,16 @@ ENV DOCKER_HOST=""
 # Set SHELL env var for Claude Code's Bash tool
 ENV SHELL=/bin/bash
 
-# Create non-root user 'claude' with session directory
-# Note: node:20-alpine already has node user/group at 1000, so we use 1001
-RUN addgroup -g 1001 claude && \
-    adduser -u 1001 -G claude -h /home/claude -D claude && \
+# Build arguments for configurable user UID/GID
+# Default to 501 (macOS default UID/GID) for seamless file ownership on macOS hosts
+# For Linux hosts, override with: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
+ARG CLAUDE_UID=501
+ARG CLAUDE_GID=501
+
+# Create non-root user 'claude' with configurable UID/GID
+# This ensures files created by Claude in /workspace are owned by your host user
+RUN addgroup -g ${CLAUDE_GID} claude && \
+    adduser -u ${CLAUDE_UID} -G claude -h /home/claude -D claude && \
     mkdir -p /home/claude/.claude && \
     chown claude:claude /home/claude/.claude
 
