@@ -134,3 +134,27 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - GitHub IPs are fetched dynamically and don't need to be listed
   - Domains are resolved to IPs via `dig` at container startup
 ---
+
+## 2026-01-21 19:00 UTC - US-016
+- **What was implemented**: Comprehensive documentation for the persistent container workflow
+- **Files changed**: `README.md`
+- **Implementation details**:
+  - Updated Quick Start section with `docker compose up -d` + `exec` workflow
+  - Added `cap_add: NET_ADMIN, NET_RAW` to example compose configuration
+  - Documented Ctrl+C behavior: exits Claude but keeps container running
+  - Added new "Network Firewall" section explaining:
+    - How the firewall works (iptables + ipset)
+    - Default allowed domains (GitHub, npm, Anthropic services)
+    - How to customize allowed domains with `.claude/allowed-domains.txt`
+    - Requirements (NET_ADMIN, NET_RAW capabilities)
+    - How to disable firewall by removing cap_add
+  - Added new "User UID/GID Configuration" section:
+    - Default 501 for macOS
+    - Instructions for Linux users (UID/GID 1000)
+    - Both env var and build-arg methods
+  - Updated Security section with firewall and configurable UID mentions
+- **Learnings for future iterations**:
+  - README documentation is straightforward - just edit and run go vet/build
+  - Keep examples consistent between README and compose.yaml
+  - REJECT vs DROP explained in firewall docs for user understanding
+---
