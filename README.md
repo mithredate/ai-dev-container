@@ -189,7 +189,7 @@ Without custom configuration, the firewall allows:
 
 - **GitHub**: All GitHub IP ranges (fetched dynamically)
 - **npm**: `registry.npmjs.org`
-- **Anthropic**: `api.anthropic.com`, `sentry.io`, `statsig.anthropic.com`, `statsig.com`
+- **Anthropic**: `api.anthropic.com`, `console.anthropic.com` (auth), `sentry.io`, `statsig.anthropic.com`, `statsig.com`
 
 ### Customizing Allowed Domains
 

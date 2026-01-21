@@ -16,10 +16,11 @@ IPSET_NAME="allowed_ips"
 # Default allowed domains (used if no custom config exists)
 # - GitHub: fetched dynamically from api.github.com/meta
 # - Package registries: npmjs
-# - Anthropic services: API, Sentry, Statsig
+# - Anthropic services: API, Console (auth), Sentry, Statsig
 DEFAULT_DOMAINS="
 registry.npmjs.org
 api.anthropic.com
+console.anthropic.com
 sentry.io
 statsig.anthropic.com
 statsig.com

@@ -39,6 +39,9 @@ registry.npmjs.org
 # Claude API
 api.anthropic.com
 
+# Authentication (required for claude login)
+console.anthropic.com
+
 # Telemetry and monitoring
 sentry.io
 statsig.anthropic.com
