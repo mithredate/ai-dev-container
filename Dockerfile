@@ -18,12 +18,27 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/bridge ./cmd/bridg
 # Stage 2: Runtime stage - minimal production image
 FROM node:20-alpine AS runtime
 
-# Install only essential runtime dependencies:
+# Install runtime dependencies:
 # - bash: Required by Claude Code CLI for shell execution
 # - docker-cli: Docker client for container communication (no daemon)
 # - git: Required for Claude Code version control operations
+# - iptables: Firewall rules for network isolation
+# - ipset: Efficient IP set matching for firewall
+# - iproute2: Network tools including 'ip' command
+# - bind-tools: DNS utilities including 'dig' for domain resolution
+# - curl: HTTP client for fetching GitHub IP ranges
+# - jq: JSON parsing for GitHub API responses
 # Multi-stage build ensures Go compiler and build tools are not included
-RUN apk add --no-cache bash docker-cli=29.1.3-r1 git && \
+RUN apk add --no-cache \
+    bash \
+    docker-cli=29.1.3-r1 \
+    git \
+    iptables \
+    ipset \
+    iproute2 \
+    bind-tools \
+    curl \
+    jq && \
     rm -rf /var/cache/apk/*
 
 # Install claude-code CLI globally and clean npm artifacts
