@@ -52,6 +52,10 @@ services:
     container_name: ai-dev-container-claude
     stdin_open: true
     tty: true
+    # Required capabilities for firewall initialization (iptables/ipset)
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     environment:
       # Set CLAUDE_YOLO=1 to enable --dangerously-skip-permissions mode
       - CLAUDE_YOLO=${CLAUDE_YOLO:-0}

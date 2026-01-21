@@ -49,8 +49,9 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.12 && \
 # Copy Go bridge binary from builder stage
 COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 
-# Copy entrypoint script
+# Copy entrypoint and firewall init scripts
 COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
+COPY --chmod=755 scripts/init-firewall.sh /scripts/init-firewall.sh
 
 # Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
 # These scripts route commands through the bridge when BRIDGE_ENABLED=1
@@ -77,8 +78,9 @@ RUN addgroup -g 1001 claude && \
 # Set working directory
 WORKDIR /workspace
 
-# Switch to non-root user
-USER claude
+# Note: Container starts as root to allow firewall initialization.
+# The entrypoint script runs the firewall setup as root, then drops to 'claude' user.
+# This ensures the firewall persists for the container lifetime (not re-run on every exec).
 
-# Start Claude CLI via entrypoint
+# Start via entrypoint (runs as root, drops to claude user after firewall init)
 ENTRYPOINT ["/scripts/entrypoint.sh"]
