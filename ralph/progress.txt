@@ -103,3 +103,18 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - `docker compose exec` runs as container user (root), so `run_as_user` is important
   - When using `su -c`, quote the command properly to handle arguments with spaces
 ---
+
+## 2026-01-21 17:30 UTC - US-014
+- **What was implemented**: Configurable user UID/GID for workspace file permissions
+- **Files changed**: `Dockerfile`, `compose.yaml`
+- **Implementation details**:
+  - Added `CLAUDE_UID` build arg (default: 501 for macOS)
+  - Added `CLAUDE_GID` build arg (default: 501 for macOS)
+  - User creation now uses `${CLAUDE_UID}` and `${CLAUDE_GID}` instead of hardcoded 1001
+  - Updated compose.yaml with documented args section showing how to override
+  - Linux users can set `CLAUDE_UID=1000 CLAUDE_GID=1000` env vars before building
+- **Learnings for future iterations**:
+  - macOS default UID/GID is 501, Linux default is typically 1000
+  - compose.yaml args support `${VAR:-default}` syntax for env var with fallback
+  - Build args must be declared in Dockerfile before use (`ARG` directive)
+---
