@@ -64,3 +64,20 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - REJECT is better than DROP for dev containers - gives immediate ICMP response
   - iptables OUTPUT rules: allow loopback first, then ESTABLISHED/RELATED, then DNS, then ipset match, finally REJECT all
 ---
+
+## 2026-01-21 16:00 UTC - US-012
+- **What was implemented**: Firewall verification function to test the firewall works correctly
+- **Files changed**: `scripts/init-firewall.sh`
+- **Implementation details**:
+  - Added `verify_firewall()` function that tests both allowed and blocked connections
+  - Tests api.github.com connection (should succeed - allowed via GitHub IP ranges)
+  - Tests example.com connection (should fail - not in allowed list)
+  - Uses curl with 5s timeout for quick feedback
+  - Logs results with checkmarks (✓) for pass, (✗) for fail
+  - Function returns non-zero exit code if any verification fails
+  - Main function calls `verify_firewall` after setup and exits with error if it fails
+- **Learnings for future iterations**:
+  - Using curl with `-sf --max-time 5` for verification: `-s` silent, `-f` fail fast, short timeout
+  - REJECT firewall rule gives immediate curl failure (vs DROP which would timeout)
+  - Verification after firewall setup helps catch misconfigurations early
+---
