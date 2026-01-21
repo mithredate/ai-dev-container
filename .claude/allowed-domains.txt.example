@@ -1,0 +1,52 @@
+# Allowed Domains Configuration
+# ===============================
+# This file configures which domains the Claude container can access.
+# Copy this file to `.claude/allowed-domains.txt` to customize network access.
+#
+# Format:
+#   - One domain per line
+#   - Lines starting with # are comments
+#   - Empty lines are ignored
+#   - Domains are resolved to IPs via DNS at container startup
+#
+# Note: GitHub IP ranges are always fetched dynamically from api.github.com/meta
+# and do not need to be listed here.
+
+# ----------------------------------------
+# GitHub (automatically included)
+# ----------------------------------------
+# GitHub IPs are fetched dynamically from the GitHub API.
+# You don't need to add github.com or api.github.com here.
+
+# ----------------------------------------
+# Package Registries
+# ----------------------------------------
+# npm registry
+registry.npmjs.org
+
+# Uncomment for other package managers:
+# pypi.org
+# files.pythonhosted.org
+# crates.io
+# static.crates.io
+# rubygems.org
+# packagist.org
+# repo.maven.apache.org
+
+# ----------------------------------------
+# Anthropic Services
+# ----------------------------------------
+# Claude API
+api.anthropic.com
+
+# Telemetry and monitoring
+sentry.io
+statsig.anthropic.com
+statsig.com
+
+# ----------------------------------------
+# Custom Domains
+# ----------------------------------------
+# Add your project-specific domains below:
+# api.example.com
+# cdn.example.com
