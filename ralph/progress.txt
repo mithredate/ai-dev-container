@@ -6,6 +6,7 @@ Started: Wed Jan 21 14:07:23 CET 2026
 - Quality checks: `go vet ./...` and `go build ./...`
 - Shell scripts in `/scripts/` use POSIX sh (dash compatible), not bash
 - The entrypoint uses `exec` to replace the shell process with the target command
+- Container starts as root for firewall setup, use `run_as_user` to drop privileges to claude user
 
 ---
 
@@ -80,4 +81,25 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - Using curl with `-sf --max-time 5` for verification: `-s` silent, `-f` fail fast, short timeout
   - REJECT firewall rule gives immediate curl failure (vs DROP which would timeout)
   - Verification after firewall setup helps catch misconfigurations early
+---
+
+## 2026-01-21 16:45 UTC - US-013
+- **What was implemented**: Docker Compose configuration for automatic firewall initialization
+- **Files changed**: `compose.yaml`, `Dockerfile`, `scripts/entrypoint.sh`
+- **Implementation details**:
+  - Added `cap_add: [NET_ADMIN, NET_RAW]` to claude service in compose.yaml
+  - Copied `init-firewall.sh` script to container at `/scripts/init-firewall.sh`
+  - Removed `USER claude` from Dockerfile - container now starts as root
+  - Added `init_firewall()` function to entrypoint that:
+    - Checks for marker file `/tmp/.firewall_initialized` to skip if already done
+    - Verifies firewall script exists and is executable
+    - Runs script as root, creates marker on success
+    - Fails gracefully with warning if initialization fails
+  - Added `run_as_user()` function that uses `su -s /bin/sh claude -c "$*"` to drop privileges
+  - Modified all command execution paths to use `run_as_user` (except `tail -f /dev/null`)
+- **Learnings for future iterations**:
+  - Container must start as root for firewall setup, then drop privileges via `su`
+  - Marker file in `/tmp/` persists for container lifetime but not across restarts
+  - `docker compose exec` runs as container user (root), so `run_as_user` is important
+  - When using `su -c`, quote the command properly to handle arguments with spaces
 ---
