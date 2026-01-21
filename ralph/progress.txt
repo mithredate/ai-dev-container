@@ -118,3 +118,19 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - compose.yaml args support `${VAR:-default}` syntax for env var with fallback
   - Build args must be declared in Dockerfile before use (`ARG` directive)
 ---
+
+## 2026-01-21 18:15 UTC - US-015
+- **What was implemented**: Example allowed-domains.txt configuration file
+- **Files changed**: `.claude/allowed-domains.txt.example`
+- **Implementation details**:
+  - Created `.claude/allowed-domains.txt.example` as template for custom domain configuration
+  - Organized with commented sections: GitHub (auto-included), Package registries, Anthropic services, Custom domains
+  - Format documented: one domain per line, # for comments, empty lines ignored
+  - Includes header explaining how to use (copy to `.claude/allowed-domains.txt`)
+  - Pre-populated with default domains from init-firewall.sh
+  - Added commented-out examples for common package registries (PyPI, crates.io, rubygems, etc.)
+- **Learnings for future iterations**:
+  - The firewall script at `/workspace/.claude/allowed-domains.txt` is the runtime config path
+  - GitHub IPs are fetched dynamically and don't need to be listed
+  - Domains are resolved to IPs via `dig` at container startup
+---
