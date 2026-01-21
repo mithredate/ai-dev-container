@@ -163,6 +163,39 @@ show_rules() {
     done
 }
 
+# Verify firewall is working correctly
+# Returns 0 if verification passes, 1 if it fails
+verify_firewall() {
+    log "Verifying firewall configuration..."
+    local success=0
+
+    # Test 1: Should be able to reach api.github.com (allowed)
+    log "  Testing allowed connection to api.github.com..."
+    if curl -sf --max-time 5 "https://api.github.com/meta" >/dev/null 2>&1; then
+        log "  ✓ Successfully connected to api.github.com (allowed)"
+    else
+        log_error "  ✗ Failed to connect to api.github.com - should be allowed!"
+        success=1
+    fi
+
+    # Test 2: Should NOT be able to reach example.com (blocked)
+    log "  Testing blocked connection to example.com..."
+    if curl -sf --max-time 5 "http://example.com" >/dev/null 2>&1; then
+        log_error "  ✗ Connected to example.com - should be blocked!"
+        success=1
+    else
+        log "  ✓ Connection to example.com correctly blocked"
+    fi
+
+    if [ "$success" -eq 0 ]; then
+        log "Firewall verification passed"
+    else
+        log_error "Firewall verification FAILED"
+    fi
+
+    return $success
+}
+
 # Main function
 main() {
     log "Initializing firewall..."
@@ -189,6 +222,12 @@ main() {
 
     # Show final rules
     show_rules
+
+    # Verify firewall is working
+    if ! verify_firewall; then
+        log_error "Firewall initialization failed verification"
+        exit 1
+    fi
 
     log "Firewall initialization complete"
 }
