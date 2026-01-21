@@ -1,0 +1,20 @@
+# Ralph Progress Log
+Started: Tue Jan 21 2026
+
+## Codebase Patterns
+- Use `COPY --chmod=755` in Dockerfile to set script permissions in a single layer
+- Shell scripts use `#!/bin/sh` with `shellcheck shell=dash` directive for POSIX compatibility
+- Scripts log to stderr with a prefix like `[scriptname]` for visibility
+- Go module: `github.com/mithredate/ai-dev-container`, use `go build ./cmd/bridge` to build
+- Go CLI uses standard library `flag` package for argument parsing
+- Dockerfile Go version must match go.mod (currently requires Go 1.24+)
+- Docker image size ~359MB due to: node:20-alpine (144MB) + docker-cli (31MB) + claude-code (87MB)
+- Wrapper scripts go in /scripts/wrappers/ (not /usr/local/bin/) - prepend to PATH for precedence
+- Node/npm/npx wrappers use CLAUDE_STARTING=1 env var to allow Claude Code startup with native node, then route subsequent calls through bridge
+- Use named Docker volumes for credential storage instead of bind mounts (more portable across UID mismatches)
+- Claude Code Viewer npx container mounts volumes to `/root/.claude` (not `/home/node/.claude`) since npx runs as root
+- Alpine uses `apk` for package management, not `apt-get`
+- Alpine iptables/ipset syntax is same as Debian
+
+---
+
