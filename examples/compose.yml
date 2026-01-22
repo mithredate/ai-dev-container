@@ -76,18 +76,6 @@ services:
       BRIDGE_ENABLED: "1"
       # Required: Your Anthropic API key
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      # ⚠️  YOLO Mode (Optional - DANGEROUS)
-      # Uncomment to enable minimal confirmation prompts.
-      # When enabled, Claude will execute commands without asking for confirmation.
-      #
-      # SECURITY WARNING:
-      # - Only enable in isolated development environments
-      # - NEVER enable in production or environments with sensitive data
-      # - Claude may execute destructive commands (rm -rf, DROP TABLE, etc.)
-      # - You assume full responsibility for any damage caused
-      # - Default: disabled (safe mode with confirmation prompts)
-      #
-      # CLAUDE_YOLO: "1"
     volumes:
       # Mount your project at /workspace (Claude's working directory)
       - .:/workspace
@@ -100,7 +88,9 @@ services:
       # - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
     stdin_open: true
     tty: true
-    # Run interactively: docker compose run claude
+    # Usage:
+    #   docker compose exec claude claude                   # Run interactively
+    #   docker compose exec -e CLAUDE_YOLO=1 claude claude  # Run in YOLO mode
 
   # ===========================================
   # Claude Code Viewer (Optional)

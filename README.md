@@ -32,7 +32,6 @@ services:
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       BRIDGE_ENABLED: "1"
-      CLAUDE_YOLO: ${CLAUDE_YOLO:-0}
     volumes:
       - .:/workspace
       - claude-config:/home/claude/.claude
@@ -51,9 +50,14 @@ docker compose up -d claude
 
 # Run Claude interactively
 docker compose exec claude claude
+
+# Run Claude with --dangerously-skip-permissions (YOLO mode)
+docker compose exec -e CLAUDE_YOLO=1 claude claude
 ```
 
 When you press `Ctrl+C`, Claude exits but the container keeps running. You can run Claude again with `docker compose exec claude claude` without waiting for the container to start.
+
+**Note:** The `claude` wrapper script automatically handles user switching (root → claude user) and applies `--dangerously-skip-permissions` when `CLAUDE_YOLO=1` is set.
 
 To stop the container completely:
 
@@ -269,7 +273,7 @@ The default (501) should work for most macOS setups. No configuration needed.
 |----------|-------------|
 | `ANTHROPIC_API_KEY` | Optional. If not set, authenticate interactively after attach |
 | `BRIDGE_ENABLED` | Set to `1` to route commands to sidecar containers |
-| `CLAUDE_YOLO` | Set to `1` for minimal confirmation prompts (dangerous) |
+| `CLAUDE_YOLO` | Set to `1` to run with `--dangerously-skip-permissions` (YOLO mode) |
 
 ## Building
 

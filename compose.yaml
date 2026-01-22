@@ -7,8 +7,9 @@
 #   4. viewer: Claude Code Viewer web UI for monitoring sessions
 #
 # Usage:
-#   docker compose up -d      # Start all services
-#   docker compose exec claude claude  # Enter Claude interactively (if not using YOLO)
+#   docker compose up -d                              # Start all services
+#   docker compose exec claude claude                 # Run Claude interactively
+#   docker compose exec -e CLAUDE_YOLO=1 claude claude  # Run Claude in YOLO mode
 #
 # For development on this project, this allows Claude to run go commands
 # (go build, go test, go vet, etc.) in the golang sidecar container.
@@ -64,8 +65,6 @@ services:
       - NET_ADMIN
       - NET_RAW
     environment:
-      # Set CLAUDE_YOLO=1 to enable --dangerously-skip-permissions mode
-      - CLAUDE_YOLO=${CLAUDE_YOLO:-0}
       # Enable bridge wrappers to route commands to sidecar containers
       - BRIDGE_ENABLED=1
       # Point bridge to the config file
