@@ -78,6 +78,21 @@ setup_ipset() {
     log "Adding Docker internal DNS (127.0.0.11)..."
     ipset add "$IPSET_NAME" 127.0.0.11
 
+    # Add Docker internal network ranges (for container-to-container communication)
+    # This allows reaching other compose services like socket-proxy, golang sidecar, etc.
+    log "Adding Docker internal network ranges..."
+    # Get the container's network from routing table and allow entire subnet
+    local docker_network
+    docker_network=$(ip route show | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/[0-9]+ dev eth0' | awk '{print $1}' | head -1)
+    if [ -n "$docker_network" ]; then
+        log "  Adding Docker network: $docker_network"
+        ipset add "$IPSET_NAME" "$docker_network" 2>/dev/null || true
+    else
+        # Fallback: add common Docker network ranges
+        log "  Could not detect Docker network, adding common ranges..."
+        ipset add "$IPSET_NAME" 172.16.0.0/12 2>/dev/null || true
+    fi
+
     # Fetch and add GitHub IPs
     local github_ips
     github_ips=$(fetch_github_ips) || {
