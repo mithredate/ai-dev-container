@@ -25,6 +25,10 @@ services:
       - socket-proxy
     stdin_open: true
     tty: true
+    # Required for network firewall (optional but recommended)
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
       BRIDGE_ENABLED: "1"
@@ -39,10 +43,22 @@ volumes:
   claude-config:
 ```
 
-Then run:
+Start the container in the background, then run Claude interactively:
 
 ```bash
-docker compose up -d claude && docker attach $(docker compose ps -q claude)
+# Start the container (stays running in background)
+docker compose up -d claude
+
+# Run Claude interactively
+docker compose exec claude claude
+```
+
+When you press `Ctrl+C`, Claude exits but the container keeps running. You can run Claude again with `docker compose exec claude claude` without waiting for the container to start.
+
+To stop the container completely:
+
+```bash
+docker compose down
 ```
 
 ## How It Works
@@ -152,13 +168,100 @@ services:
 
 Access at [http://localhost:3000](http://localhost:3000) (or set `VIEWER_PORT` in your `.env`).
 
+## Network Firewall
+
+The container includes an optional network firewall that restricts outbound connections to a whitelist of allowed domains. This provides an additional layer of security by preventing unauthorized network access.
+
+### How It Works
+
+When the container starts, it initializes firewall rules that:
+
+1. Allow localhost and Docker internal DNS traffic
+2. Fetch GitHub IP ranges dynamically from `api.github.com/meta`
+3. Resolve configured domains to IPs via DNS
+4. Block (REJECT) all other outbound traffic
+
+The firewall uses `iptables` with `ipset` for efficient IP matching. Blocked connections receive an immediate ICMP rejection for fast feedback.
+
+### Default Allowed Domains
+
+Without custom configuration, the firewall allows:
+
+- **GitHub**: All GitHub IP ranges (fetched dynamically)
+- **npm**: `registry.npmjs.org`
+- **Anthropic**: `api.anthropic.com`, `console.anthropic.com` (auth), `sentry.io`, `statsig.anthropic.com`, `statsig.com`
+
+### Customizing Allowed Domains
+
+To add custom domains, create `.claude/allowed-domains.txt` in your project:
+
+```bash
+# Copy the example file
+cp .claude/allowed-domains.txt.example .claude/allowed-domains.txt
+
+# Edit to add your domains
+```
+
+Format:
+```
+# One domain per line
+# Lines starting with # are comments
+# Empty lines are ignored
+
+registry.npmjs.org
+api.anthropic.com
+api.example.com
+```
+
+See `.claude/allowed-domains.txt.example` for a complete template with common domains.
+
+### Requirements
+
+The firewall requires these Docker capabilities (already configured in compose.yaml):
+
+```yaml
+cap_add:
+  - NET_ADMIN
+  - NET_RAW
+```
+
+### Disabling the Firewall
+
+To run without network restrictions, remove the `cap_add` section from your compose file. The container will start without firewall initialization.
+
+## User UID/GID Configuration
+
+By default, the container user (`claude`) is created with UID/GID 501, matching the default macOS user. This ensures files created by Claude are owned by your user on the host.
+
+### Linux Users
+
+Linux typically uses UID/GID 1000 for the first user. Override the defaults when building:
+
+```bash
+# Set environment variables before building
+export CLAUDE_UID=1000
+export CLAUDE_GID=1000
+docker compose build
+```
+
+Or specify directly:
+
+```bash
+docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
+```
+
+### macOS Users
+
+The default (501) should work for most macOS setups. No configuration needed.
+
 ## Security
 
 - **Socket proxy** limits Claude to container list/exec operations only
+- **Network firewall** restricts outbound connections to allowed domains only
 - **Never mount** sensitive directories (`~/.ssh`, `~/.aws`, `~/.config`)
 - **Shadow sensitive files** in workspace with `/dev/null` mounts (see [Sharing Host Credentials](#sharing-host-credentials-required-for-mcp-sso))
 - Pass credentials via environment variables only
-- Container runs as non-root user (`claude`, UID 1001)
+- Container runs as non-root user (`claude`) with configurable UID/GID
 
 ## Environment Variables
 

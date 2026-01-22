@@ -18,12 +18,27 @@ RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/bridge ./cmd/bridg
 # Stage 2: Runtime stage - minimal production image
 FROM node:20-alpine AS runtime
 
-# Install only essential runtime dependencies:
+# Install runtime dependencies:
 # - bash: Required by Claude Code CLI for shell execution
 # - docker-cli: Docker client for container communication (no daemon)
 # - git: Required for Claude Code version control operations
+# - iptables: Firewall rules for network isolation
+# - ipset: Efficient IP set matching for firewall
+# - iproute2: Network tools including 'ip' command
+# - bind-tools: DNS utilities including 'dig' for domain resolution
+# - curl: HTTP client for fetching GitHub IP ranges
+# - jq: JSON parsing for GitHub API responses
 # Multi-stage build ensures Go compiler and build tools are not included
-RUN apk add --no-cache bash docker-cli=29.1.3-r1 git && \
+RUN apk add --no-cache \
+    bash \
+    docker-cli=29.1.3-r1 \
+    git \
+    iptables \
+    ipset \
+    iproute2 \
+    bind-tools \
+    curl \
+    jq && \
     rm -rf /var/cache/apk/*
 
 # Install claude-code CLI globally and clean npm artifacts
@@ -34,8 +49,9 @@ RUN npm install -g @anthropic-ai/claude-code@2.1.12 && \
 # Copy Go bridge binary from builder stage
 COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 
-# Copy entrypoint script
+# Copy entrypoint and firewall init scripts
 COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
+COPY --chmod=755 scripts/init-firewall.sh /scripts/init-firewall.sh
 
 # Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
 # These scripts route commands through the bridge when BRIDGE_ENABLED=1
@@ -52,18 +68,25 @@ ENV DOCKER_HOST=""
 # Set SHELL env var for Claude Code's Bash tool
 ENV SHELL=/bin/bash
 
-# Create non-root user 'claude' with session directory
-# Note: node:20-alpine already has node user/group at 1000, so we use 1001
-RUN addgroup -g 1001 claude && \
-    adduser -u 1001 -G claude -h /home/claude -D claude && \
+# Build arguments for configurable user UID/GID
+# Default to 501 (macOS default UID/GID) for seamless file ownership on macOS hosts
+# For Linux hosts, override with: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
+ARG CLAUDE_UID=501
+ARG CLAUDE_GID=501
+
+# Create non-root user 'claude' with configurable UID/GID
+# This ensures files created by Claude in /workspace are owned by your host user
+RUN addgroup -g ${CLAUDE_GID} claude && \
+    adduser -u ${CLAUDE_UID} -G claude -h /home/claude -D claude && \
     mkdir -p /home/claude/.claude && \
     chown claude:claude /home/claude/.claude
 
 # Set working directory
 WORKDIR /workspace
 
-# Switch to non-root user
-USER claude
+# Note: Container starts as root to allow firewall initialization.
+# The entrypoint script runs the firewall setup as root, then drops to 'claude' user.
+# This ensures the firewall persists for the container lifetime (not re-run on every exec).
 
-# Start Claude CLI via entrypoint
+# Start via entrypoint (runs as root, drops to claude user after firewall init)
 ENTRYPOINT ["/scripts/entrypoint.sh"]

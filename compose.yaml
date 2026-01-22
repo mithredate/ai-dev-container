@@ -49,9 +49,20 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Configure user UID/GID for file ownership compatibility with host:
+      # - Default: 501 (macOS default UID/GID)
+      # - For Linux: Override with CLAUDE_UID=1000 and CLAUDE_GID=1000
+      # Usage: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
+      args:
+        CLAUDE_UID: ${CLAUDE_UID:-501}
+        CLAUDE_GID: ${CLAUDE_GID:-501}
     container_name: ai-dev-container-claude
     stdin_open: true
     tty: true
+    # Required capabilities for firewall initialization (iptables/ipset)
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
     environment:
       # Set CLAUDE_YOLO=1 to enable --dangerously-skip-permissions mode
       - CLAUDE_YOLO=${CLAUDE_YOLO:-0}
