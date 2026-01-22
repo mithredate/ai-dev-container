@@ -10,9 +10,23 @@ import (
 )
 
 const (
-	defaultConfigPath = "/workspace/.aidevcontainer/bridge.yaml"
 	exampleConfigPath = "examples/claude-bridge.yaml"
 )
+
+// getDefaultConfigPath returns the default config path based on AIDEV_CONFIG_DIR
+// or falls back to PWD/.aidevcontainer/bridge.yaml
+func getDefaultConfigPath() string {
+	configDir := os.Getenv("AIDEV_CONFIG_DIR")
+	if configDir == "" {
+		// Fall back to current working directory
+		pwd, err := os.Getwd()
+		if err != nil {
+			pwd = "."
+		}
+		configDir = pwd + "/.aidevcontainer"
+	}
+	return configDir + "/bridge.yaml"
+}
 
 // Config represents the bridge configuration file.
 type Config struct {
@@ -39,7 +53,7 @@ func LoadConfig(configPath string) (*Config, error) {
 		path = os.Getenv("BRIDGE_CONFIG")
 	}
 	if path == "" {
-		path = defaultConfigPath
+		path = getDefaultConfigPath()
 	}
 
 	// Read config file
