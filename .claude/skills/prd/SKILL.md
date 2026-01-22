@@ -1,240 +1,156 @@
 ---
 name: prd
-description: "Generate a Product Requirements Document (PRD) for a new feature. Use when planning a feature, starting a new project, or when asked to create a PRD. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out."
+description: "Generate a Product Requirements Document (PRD) for a new feature. Use when: planning a feature, starting a new project, user asks to 'create a prd', 'write prd for', 'plan this feature', 'requirements for', or 'spec out'."
 ---
 
 # PRD Generator
 
-Create detailed Product Requirements Documents that are clear, actionable, and suitable for implementation.
+## Workflow
 
----
-
-## The Job
-
-1. Receive a feature description from the user
-2. Ask 3-5 essential clarifying questions (with lettered options)
-3. Generate a structured PRD based on answers
+1. Receive feature description
+2. Ask 3-5 clarifying questions (lettered options for quick "1A, 2C, 3B" responses)
+3. Generate PRD
 4. Save to `tasks/prd-[feature-name].md`
 
-**Important:** Do NOT start implementing. Just create the PRD.
+**Do NOT implement. Only create the PRD.**
 
----
+## Clarifying Questions
 
-## Step 1: Clarifying Questions
+Ask only where the prompt is ambiguous. Focus on:
+- Problem/Goal
+- Core functionality
+- Scope boundaries
+- Success criteria
 
-Ask only critical questions where the initial prompt is ambiguous. Focus on:
-
-- **Problem/Goal:** What problem does this solve?
-- **Core Functionality:** What are the key actions?
-- **Scope/Boundaries:** What should it NOT do?
-- **Success Criteria:** How do we know it's done?
-
-### Format Questions Like This:
-
+Format with lettered options:
 ```
-1. What is the primary goal of this feature?
-   A. Improve user onboarding experience
-   B. Increase user retention
+1. What is the primary goal?
+   A. Improve onboarding
+   B. Increase retention
    C. Reduce support burden
-   D. Other: [please specify]
-
-2. Who is the target user?
-   A. New users only
-   B. Existing users only
-   C. All users
-   D. Admin users only
-
-3. What is the scope?
-   A. Minimal viable version
-   B. Full-featured implementation
-   C. Just the backend/API
-   D. Just the UI
+   D. Other: [specify]
 ```
 
-This lets users respond with "1A, 2C, 3B" for quick iteration.
+## PRD Template
 
----
-
-## Step 2: PRD Structure
-
-Generate the PRD with these sections:
-
-### 1. Introduction/Overview
-Brief description of the feature and the problem it solves.
-
-### 2. Goals
-Specific, measurable objectives (bullet list).
-
-### 3. User Stories
-Each story needs:
-- **Title:** Short descriptive name
-- **Description:** "As a [user], I want [feature] so that [benefit]"
-- **Acceptance Criteria:** Verifiable checklist of what "done" means
-
-Each story should be small enough to implement in one focused session.
-
-**Format:**
 ```markdown
+# PRD: [Feature Name]
+
+## Overview
+[Problem and solution in 2-3 sentences]
+
+## Goals
+- [Specific, measurable objective]
+
+## User Stories
+
 ### US-001: [Title]
 **Description:** As a [user], I want [feature] so that [benefit].
 
 **Acceptance Criteria:**
-- [ ] Specific verifiable criterion
-- [ ] Another criterion
+- [ ] [Verifiable criterion - not "works correctly"]
 - [ ] Typecheck/lint passes
-- [ ] **[UI stories only]** Verify in browser using dev-browser skill
+- [ ] [UI stories] Verify in browser using dev-browser skill
+
+## Functional Requirements
+- FR-1: [Explicit, unambiguous requirement]
+
+## Non-Goals
+- [What this will NOT include]
+
+## Technical Considerations (if relevant)
+- [Constraints, dependencies, integrations]
+
+## Success Metrics
+- [How success is measured]
+
+## Open Questions
+- [Remaining uncertainties]
 ```
 
-**Important:**
-- Acceptance criteria must be verifiable, not vague. "Works correctly" is bad. "Button shows confirmation dialog before deleting" is good.
-- **For any story with UI changes:** Always include "Verify in browser using dev-browser skill" as acceptance criteria. This ensures visual verification of frontend work.
+## Key Guidelines
 
-### 4. Functional Requirements
-Numbered list of specific functionalities:
-- "FR-1: The system must allow users to..."
-- "FR-2: When a user clicks X, the system must..."
+**User stories:** Small enough for one focused session. Each acceptance criterion must be verifiable.
 
-Be explicit and unambiguous.
+**UI stories:** Always include "Verify in browser using dev-browser skill" in acceptance criteria.
 
-### 5. Non-Goals (Out of Scope)
-What this feature will NOT include. Critical for managing scope.
+**Audience:** Write for junior developers or AI agents—be explicit, avoid jargon, use numbered requirements.
 
-### 6. Design Considerations (Optional)
-- UI/UX requirements
-- Link to mockups if available
-- Relevant existing components to reuse
-
-### 7. Technical Considerations (Optional)
-- Known constraints or dependencies
-- Integration points with existing systems
-- Performance requirements
-
-### 8. Success Metrics
-How will success be measured?
-- "Reduce time to complete X by 50%"
-- "Increase conversion rate by 10%"
-
-### 9. Open Questions
-Remaining questions or areas needing clarification.
-
----
-
-## Writing for Junior Developers
-
-The PRD reader may be a junior developer or AI agent. Therefore:
-
-- Be explicit and unambiguous
-- Avoid jargon or explain it
-- Provide enough detail to understand purpose and core logic
-- Number requirements for easy reference
-- Use concrete examples where helpful
-
----
-
-## Output
-
-- **Format:** Markdown (`.md`)
-- **Location:** `tasks/`
-- **Filename:** `prd-[feature-name].md` (kebab-case)
-
----
-
-## Example PRD
+## Example
 
 ```markdown
 # PRD: Task Priority System
 
-## Introduction
-
-Add priority levels to tasks so users can focus on what matters most. Tasks can be marked as high, medium, or low priority, with visual indicators and filtering to help users manage their workload effectively.
+## Overview
+Add priority levels (high/medium/low) to tasks with visual indicators and filtering.
 
 ## Goals
-
-- Allow assigning priority (high/medium/low) to any task
-- Provide clear visual differentiation between priority levels
-- Enable filtering and sorting by priority
-- Default new tasks to medium priority
+- Assign priority to any task
+- Visual differentiation between levels
+- Filter and sort by priority
+- Default new tasks to medium
 
 ## User Stories
 
 ### US-001: Add priority field to database
-**Description:** As a developer, I need to store task priority so it persists across sessions.
+**Description:** As a developer, I need to store task priority so it persists.
 
 **Acceptance Criteria:**
-- [ ] Add priority column to tasks table: 'high' | 'medium' | 'low' (default 'medium')
-- [ ] Generate and run migration successfully
+- [ ] Add priority column: 'high' | 'medium' | 'low' (default 'medium')
+- [ ] Migration runs successfully
 - [ ] Typecheck passes
 
-### US-002: Display priority indicator on task cards
-**Description:** As a user, I want to see task priority at a glance so I know what needs attention first.
+### US-002: Display priority indicator
+**Description:** As a user, I want to see priority at a glance.
 
 **Acceptance Criteria:**
-- [ ] Each task card shows colored priority badge (red=high, yellow=medium, gray=low)
-- [ ] Priority visible without hovering or clicking
-- [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
-
-### US-003: Add priority selector to task edit
-**Description:** As a user, I want to change a task's priority when editing it.
-
-**Acceptance Criteria:**
-- [ ] Priority dropdown in task edit modal
-- [ ] Shows current priority as selected
-- [ ] Saves immediately on selection change
+- [ ] Colored badge on task cards (red=high, yellow=medium, gray=low)
+- [ ] Visible without interaction
 - [ ] Typecheck passes
 - [ ] Verify in browser using dev-browser skill
 
-### US-004: Filter tasks by priority
-**Description:** As a user, I want to filter the task list to see only high-priority items when I'm focused.
+### US-003: Priority selector in task edit
+**Description:** As a user, I want to change priority when editing.
 
 **Acceptance Criteria:**
-- [ ] Filter dropdown with options: All | High | Medium | Low
+- [ ] Dropdown in edit modal
+- [ ] Shows current priority selected
+- [ ] Saves on change
+- [ ] Typecheck passes
+- [ ] Verify in browser using dev-browser skill
+
+### US-004: Filter by priority
+**Description:** As a user, I want to filter to high-priority items.
+
+**Acceptance Criteria:**
+- [ ] Filter dropdown: All | High | Medium | Low
 - [ ] Filter persists in URL params
-- [ ] Empty state message when no tasks match filter
+- [ ] Empty state when no matches
 - [ ] Typecheck passes
 - [ ] Verify in browser using dev-browser skill
 
 ## Functional Requirements
-
-- FR-1: Add `priority` field to tasks table ('high' | 'medium' | 'low', default 'medium')
-- FR-2: Display colored priority badge on each task card
-- FR-3: Include priority selector in task edit modal
-- FR-4: Add priority filter dropdown to task list header
-- FR-5: Sort by priority within each status column (high to medium to low)
+- FR-1: Add `priority` field ('high' | 'medium' | 'low', default 'medium')
+- FR-2: Colored priority badge on task cards
+- FR-3: Priority selector in edit modal
+- FR-4: Priority filter in list header
+- FR-5: Sort by priority within columns
 
 ## Non-Goals
-
-- No priority-based notifications or reminders
-- No automatic priority assignment based on due date
-- No priority inheritance for subtasks
+- Priority-based notifications
+- Automatic priority from due date
+- Priority inheritance for subtasks
 
 ## Technical Considerations
-
-- Reuse existing badge component with color variants
-- Filter state managed via URL search params
-- Priority stored in database, not computed
+- Reuse existing badge component
+- Filter state via URL params
 
 ## Success Metrics
-
-- Users can change priority in under 2 clicks
-- High-priority tasks immediately visible at top of lists
-- No regression in task list performance
+- Priority change in under 2 clicks
+- High-priority visible at top
+- No performance regression
 
 ## Open Questions
-
-- Should priority affect task ordering within a column?
-- Should we add keyboard shortcuts for priority changes?
+- Priority affect ordering within columns?
+- Keyboard shortcuts for priority?
 ```
-
----
-
-## Checklist
-
-Before saving the PRD:
-
-- [ ] Asked clarifying questions with lettered options
-- [ ] Incorporated user's answers
-- [ ] User stories are small and specific
-- [ ] Functional requirements are numbered and unambiguous
-- [ ] Non-goals section defines clear boundaries
-- [ ] Saved to `tasks/prd-[feature-name].md`
