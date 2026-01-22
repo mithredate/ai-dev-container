@@ -67,7 +67,7 @@ Claude Code runs in its own container and uses a **bridge script** to execute co
 
 ## Bridge Configuration
 
-Create `.claude/bridge.yaml` in your project:
+Create `.aidevcontainer/bridge.yaml` in your project:
 
 ```yaml
 version: "1"
@@ -193,11 +193,11 @@ Without custom configuration, the firewall allows:
 
 ### Customizing Allowed Domains
 
-To add custom domains, create `.claude/allowed-domains.txt` in your project:
+To add custom domains, create `.aidevcontainer/allowed-domains.txt` in your project:
 
 ```bash
 # Copy the example file
-cp .claude/allowed-domains.txt.example .claude/allowed-domains.txt
+cp .aidevcontainer/allowed-domains.txt.example .aidevcontainer/allowed-domains.txt
 
 # Edit to add your domains
 ```
@@ -213,7 +213,7 @@ api.anthropic.com
 api.example.com
 ```
 
-See `.claude/allowed-domains.txt.example` for a complete template with common domains.
+See `.aidevcontainer/allowed-domains.txt.example` for a complete template with common domains.
 
 ### Requirements
 

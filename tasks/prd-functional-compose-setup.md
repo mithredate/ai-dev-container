@@ -52,7 +52,7 @@ The solution uses PATH-based command interception: wrapper scripts in `/usr/loca
 **Description:** As a developer working on ai-dev-container, I need the project's bridge.yaml to have the correct container name matching compose.yaml.
 
 **Acceptance Criteria:**
-- [ ] `.claude/bridge.yaml` container name matches compose.yaml (`ai-dev-container-golang`)
+- [ ] `.aidevcontainer/bridge.yaml` container name matches compose.yaml (`ai-dev-container-golang`)
 - [ ] Command key names match wrapper script names (go, gofmt)
 - [ ] Typecheck passes (go build, go vet)
 

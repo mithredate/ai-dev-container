@@ -1,7 +1,7 @@
 # Allowed Domains Configuration
 # ===============================
 # This file configures which domains the Claude container can access.
-# Copy this file to `.claude/allowed-domains.txt` to customize network access.
+# Copy this file to `.aidevcontainer/allowed-domains.txt` to customize network access.
 #
 # Format:
 #   - One domain per line

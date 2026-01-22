@@ -135,7 +135,7 @@ Usage:
   bridge [flags] <command> [args...]
 
 Flags:
-  -c, --config string   Path to bridge config file (default: /workspace/.claude/bridge.yaml)
+  -c, --config string   Path to bridge config file (default: /workspace/.aidevcontainer/bridge.yaml)
   -h, --help            Show this help message
   -v, --version         Show version
 
@@ -144,7 +144,7 @@ Examples:
   bridge php artisan migrate   Run php artisan migrate in the PHP container
   bridge --config ./my.yaml npm test
 
-The bridge reads configuration from /workspace/.claude/bridge.yaml (or BRIDGE_CONFIG
+The bridge reads configuration from /workspace/.aidevcontainer/bridge.yaml (or BRIDGE_CONFIG
 environment variable) to determine which container to use for each command.
 `)
 }

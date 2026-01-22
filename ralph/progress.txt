@@ -48,7 +48,7 @@ Started: Wed Jan 21 14:07:23 CET 2026
 - **Files changed**: `scripts/init-firewall.sh`
 - **Implementation details**:
   - Created `scripts/init-firewall.sh` script using POSIX sh (dash compatible)
-  - Script reads custom allowed domains from `/workspace/.claude/allowed-domains.txt` if exists
+  - Script reads custom allowed domains from `/workspace/.aidevcontainer/allowed-domains.txt` if exists
   - Falls back to defaults: GitHub (dynamic), registry.npmjs.org, api.anthropic.com, sentry.io, statsig.anthropic.com, statsig.com
   - Uses `ipset` with hash:net type for efficient IP/CIDR matching
   - Fetches GitHub IP ranges from api.github.com/meta using curl + jq
@@ -121,16 +121,16 @@ Started: Wed Jan 21 14:07:23 CET 2026
 
 ## 2026-01-21 18:15 UTC - US-015
 - **What was implemented**: Example allowed-domains.txt configuration file
-- **Files changed**: `.claude/allowed-domains.txt.example`
+- **Files changed**: `.aidevcontainer/allowed-domains.txt.example`
 - **Implementation details**:
-  - Created `.claude/allowed-domains.txt.example` as template for custom domain configuration
+  - Created `.aidevcontainer/allowed-domains.txt.example` as template for custom domain configuration
   - Organized with commented sections: GitHub (auto-included), Package registries, Anthropic services, Custom domains
   - Format documented: one domain per line, # for comments, empty lines ignored
-  - Includes header explaining how to use (copy to `.claude/allowed-domains.txt`)
+  - Includes header explaining how to use (copy to `.aidevcontainer/allowed-domains.txt`)
   - Pre-populated with default domains from init-firewall.sh
   - Added commented-out examples for common package registries (PyPI, crates.io, rubygems, etc.)
 - **Learnings for future iterations**:
-  - The firewall script at `/workspace/.claude/allowed-domains.txt` is the runtime config path
+  - The firewall script at `/workspace/.aidevcontainer/allowed-domains.txt` is the runtime config path
   - GitHub IPs are fetched dynamically and don't need to be listed
   - Domains are resolved to IPs via `dig` at container startup
 ---
@@ -145,7 +145,7 @@ Started: Wed Jan 21 14:07:23 CET 2026
   - Added new "Network Firewall" section explaining:
     - How the firewall works (iptables + ipset)
     - Default allowed domains (GitHub, npm, Anthropic services)
-    - How to customize allowed domains with `.claude/allowed-domains.txt`
+    - How to customize allowed domains with `.aidevcontainer/allowed-domains.txt`
     - Requirements (NET_ADMIN, NET_RAW capabilities)
     - How to disable firewall by removing cap_add
   - Added new "User UID/GID Configuration" section:

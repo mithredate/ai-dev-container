@@ -52,7 +52,7 @@ Overhaul the Claude Brain Sidecar Docker image to provide a better developer exp
 **Description:** As a user, I want the Go bridge to read my bridge.yaml configuration so that commands route to the correct containers.
 
 **Acceptance Criteria:**
-- [ ] Bridge reads config from `/workspace/.claude/bridge.yaml` by default
+- [ ] Bridge reads config from `/workspace/.aidevcontainer/bridge.yaml` by default
 - [ ] Bridge supports `BRIDGE_CONFIG` env var to override config path
 - [ ] Config schema supports: `version`, `default_container`, `containers`, `commands`
 - [ ] Invalid YAML produces clear error message with line number
@@ -136,7 +136,7 @@ Overhaul the Claude Brain Sidecar Docker image to provide a better developer exp
 - FR-01: Container MUST run `claude` as the default entrypoint command
 - FR-02: When `CLAUDE_YOLO=1`, container MUST run `claude --dangerously-skip-permissions`
 - FR-03: Bridge binary MUST be compiled from Go source in `/cmd/bridge`
-- FR-04: Bridge MUST read configuration from `/workspace/.claude/bridge.yaml`
+- FR-04: Bridge MUST read configuration from `/workspace/.aidevcontainer/bridge.yaml`
 - FR-05: Bridge MUST support path translation via `paths` config section
 - FR-06: Bridge MUST stream stdout/stderr in real-time (no buffering)
 - FR-07: Bridge MUST propagate exit codes from remote commands

@@ -44,7 +44,7 @@ The key architectural principle: Claude orchestrates, sibling containers execute
 
 **Acceptance Criteria:**
 - [ ] `claude-bridge.yaml` file format documented with examples
-- [ ] File mounted into Claude container at `/workspace/.claude/bridge.yaml`
+- [ ] File mounted into Claude container at `/workspace/.aidevcontainer/bridge.yaml`
 - [ ] Bridge script reads config and routes commands to correct containers
 - [ ] Supports command aliases (e.g., `test:php` → `docker exec app_php vendor/bin/phpunit`)
 - [ ] Supports default container for unspecified commands
@@ -110,7 +110,7 @@ The key architectural principle: Claude orchestrates, sibling containers execute
 - **FR-02:** Image MUST include `claude-code` CLI installed globally via npm
 - **FR-03:** Image MUST include `docker-cli` (client only, no daemon)
 - **FR-04:** Image MUST include a `bridge` shell script at `/usr/local/bin/bridge`
-- **FR-05:** Bridge script MUST read configuration from `/workspace/.claude/bridge.yaml`
+- **FR-05:** Bridge script MUST read configuration from `/workspace/.aidevcontainer/bridge.yaml`
 - **FR-06:** Bridge script MUST translate aliased commands to `docker exec` calls
 - **FR-07:** Bridge script MUST stream output in real-time using `docker exec -t`
 - **FR-08:** Bridge script MUST propagate exit codes from remote commands
@@ -276,7 +276,7 @@ Use the `bridge` command to run operations in the correct container:
 ## File Structure
 
 - `/workspace` - Project root (same path in all containers)
-- `/workspace/.claude/bridge.yaml` - Container routing config
+- `/workspace/.aidevcontainer/bridge.yaml` - Container routing config
 
 ## Testing
 

@@ -44,7 +44,7 @@
       "description": "As a developer, I want network isolation with configurable allowed domains so each project can define its own network access rules.",
       "acceptanceCriteria": [
         "`scripts/init-firewall.sh` script created and executable",
-        "Script reads allowed domains from `/workspace/.claude/allowed-domains.txt` if exists",
+        "Script reads allowed domains from `/workspace/.aidevcontainer/allowed-domains.txt` if exists",
         "Falls back to default domains: GitHub (dynamic), registry.npmjs.org, api.anthropic.com, sentry.io, statsig.anthropic.com, statsig.com",
         "Script uses `ipset` for efficient IP matching",
         "Script fetches GitHub IP ranges from api.github.com/meta",
@@ -112,10 +112,10 @@
       "title": "Create example allowed-domains.txt",
       "description": "As a developer, I want an example config file showing how to customize allowed domains.",
       "acceptanceCriteria": [
-        "Create `.claude/allowed-domains.txt.example` in repo root",
+        "Create `.aidevcontainer/allowed-domains.txt.example` in repo root",
         "Example includes commented sections: GitHub, Package registries, Anthropic services, Custom domains",
         "Format: one domain per line, # for comments",
-        "File clearly states it should be copied to `.claude/allowed-domains.txt`",
+        "File clearly states it should be copied to `.aidevcontainer/allowed-domains.txt`",
         "Typecheck passes"
       ],
       "priority": 7,
@@ -130,7 +130,7 @@
         "README documents `docker compose up -d` + `docker compose exec claude claude` workflow",
         "README explains Ctrl+C behavior (exits Claude, not container)",
         "README explains how to customize allowed domains",
-        "README shows example `.claude/allowed-domains.txt` format",
+        "README shows example `.aidevcontainer/allowed-domains.txt` format",
         "README documents firewall behavior and default allowed domains",
         "README explains UID configuration (default 501 for macOS, use 1000 for Linux)",
         "Typecheck passes"

@@ -43,7 +43,7 @@ Improve the headless Claude Code container to support persistent operation (stay
 
 **Acceptance Criteria:**
 - [ ] `init-firewall.sh` script created and executable
-- [ ] Script reads allowed domains from `/workspace/.claude/allowed-domains.txt` if it exists
+- [ ] Script reads allowed domains from `/workspace/.aidevcontainer/allowed-domains.txt` if it exists
 - [ ] Falls back to default allowed domains if project config doesn't exist
 - [ ] Default domains include: GitHub (dynamic IPs), registry.npmjs.org, api.anthropic.com, sentry.io, statsig.anthropic.com, statsig.com
 - [ ] Script uses `ipset` for efficient IP matching
@@ -82,7 +82,7 @@ Improve the headless Claude Code container to support persistent operation (stay
 **Acceptance Criteria:**
 - [ ] README documents the new `docker compose up -d` + `exec` workflow
 - [ ] README explains how to customize allowed domains
-- [ ] README shows example `.claude/allowed-domains.txt` format
+- [ ] README shows example `.aidevcontainer/allowed-domains.txt` format
 - [ ] README documents the firewall behavior
 - [ ] README explains UID configuration (default 501 for macOS, use 1000 for Linux)
 
@@ -124,7 +124,7 @@ Improve the headless Claude Code container to support persistent operation (stay
 ├── scripts/
 │   ├── entrypoint.sh            # Changed to sleep/tail
 │   └── init-firewall.sh         # New firewall script
-└── .claude/
+└── .aidevcontainer/
     └── allowed-domains.txt      # Example config (optional per-project)
 ```
 
@@ -139,7 +139,7 @@ build:
     CLAUDE_GID: 501
 ```
 
-### Allowed Domains Format (.claude/allowed-domains.txt)
+### Allowed Domains Format (.aidevcontainer/allowed-domains.txt)
 ```
 # GitHub (IPs fetched dynamically)
 github.com

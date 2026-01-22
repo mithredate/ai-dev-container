@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	defaultConfigPath = "/workspace/.claude/bridge.yaml"
+	defaultConfigPath = "/workspace/.aidevcontainer/bridge.yaml"
 	exampleConfigPath = "examples/claude-bridge.yaml"
 )
 

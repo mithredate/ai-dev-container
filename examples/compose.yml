@@ -11,7 +11,7 @@
 # Usage:
 # 1. Copy this file to your project as compose.yml
 # 2. Adjust the volumes/services to match your project structure
-# 3. Create .claude/bridge.yaml with your command mappings
+# 3. Create .aidevcontainer/bridge.yaml with your command mappings
 # 4. Run: docker compose up -d
 
 services:

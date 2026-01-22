@@ -67,6 +67,7 @@ Before writing prd.json for a **different feature**:
    - Archive to `archive/YYYY-MM-DD-feature-name/`
    - Copy `prd.json` and `progress.txt` to archive
    - Reset `progress.txt`
+   - Move codbase patterns to root CLAUDE.md
 
 ## Cleanup Mode
 

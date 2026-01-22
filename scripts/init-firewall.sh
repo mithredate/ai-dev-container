@@ -3,14 +3,14 @@
 # Firewall Initialization Script
 # ===============================
 # Configures network isolation with allowed domains for the Claude container.
-# Reads custom domains from /workspace/.claude/allowed-domains.txt or uses defaults.
+# Reads custom domains from /workspace/.aidevcontainer/allowed-domains.txt or uses defaults.
 #
 # Must run as root with NET_ADMIN and NET_RAW capabilities.
 
 set -e
 
 # Configuration
-ALLOWED_DOMAINS_FILE="/workspace/.claude/allowed-domains.txt"
+ALLOWED_DOMAINS_FILE="/workspace/.aidevcontainer/allowed-domains.txt"
 IPSET_NAME="allowed_ips"
 
 # Default allowed domains (used if no custom config exists)
