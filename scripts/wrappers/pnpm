@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# pnpm wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge pnpm "$@"
+else
+    # Find the real pnpm binary (skip this wrapper)
+    SELF=$(command -v pnpm)
+    for BIN in /usr/local/bin/pnpm /usr/bin/pnpm; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: pnpm not found (BRIDGE_ENABLED not set and no local pnpm installation)" >&2
+    exit 127
+fi

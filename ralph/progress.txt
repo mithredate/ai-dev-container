@@ -11,3 +11,14 @@ Started:
 
 ---
 
+## 2026-01-22 - Documentation Update
+- Added "One-Session Setup Prompt" section to readme.md
+- Prompt guides Claude to set up the complete integration in a single session
+- Generic enough to work with any tech stack (Go, PHP, Laravel, TypeScript, Nuxt, etc.)
+- Covers: compose.yml updates, bridge.yaml creation, CLAUDE.md documentation, allowed-domains.txt
+- **Learnings for future iterations:**
+  - The examples directory contains comprehensive templates for reference
+  - Bridge configuration supports path mappings for different container workdirs
+  - CLAUDE.md template in examples/ has a good "Do Not" section for multi-container gotchas
+---
+

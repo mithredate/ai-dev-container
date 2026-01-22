@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# bundle wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge bundle "$@"
+else
+    # Find the real bundle binary (skip this wrapper)
+    SELF=$(command -v bundle)
+    for BIN in /usr/local/bin/bundle /usr/bin/bundle; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: bundle not found (BRIDGE_ENABLED not set and no local bundle installation)" >&2
+    exit 127
+fi

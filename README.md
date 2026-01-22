@@ -285,6 +285,104 @@ docker build -t claude-brain-sidecar .
 
 See `examples/` for complete configurations including bridge setup.
 
+## One-Session Setup Prompt
+
+Copy and paste this prompt into Claude Code to set up the entire Claude Brain Sidecar integration in one session:
+
+````
+I want to add Claude Brain Sidecar (ghcr.io/mithredate/ai-dev-container) to this project. This is a Docker-based AI coding assistant that runs as a sidecar service and executes commands in my project's containers via a secure socket proxy.
+
+Please analyze my project and set up the complete integration:
+
+## 1. Analyze Project Structure
+- Identify the tech stack (language, framework, package manager)
+- Find existing compose.yml/docker-compose.yml and container services
+- Identify which containers run which runtimes (PHP, Node, Go, Python, etc.)
+- Note container names and working directories
+
+## 2. Update Docker Compose
+Add these services to my compose file (create if missing):
+
+```yaml
+services:
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:latest
+    environment:
+      CONTAINERS: 1
+      EXEC: 1
+      POST: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  claude:
+    image: ghcr.io/mithredate/ai-dev-container:latest
+    depends_on:
+      - socket-proxy
+    stdin_open: true
+    tty: true
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      DOCKER_HOST: tcp://socket-proxy:2375
+      BRIDGE_ENABLED: "1"
+    volumes:
+      - .:/workspace
+      - claude-config:/home/claude/.claude
+
+volumes:
+  claude-config:
+```
+
+## 3. Create Bridge Configuration
+Create `.aidevcontainer/bridge.yaml` with command mappings for my project's containers:
+- Map runtime commands (php, node, go, python, etc.) to appropriate containers
+- Set correct working directories matching the container mounts
+- Add path mappings if workspace paths differ from container paths
+- Include test commands, linters, and package managers
+
+Example structure:
+```yaml
+version: "1"
+default_container: app
+containers:
+  app: <project>-<service>-1
+commands:
+  <command>:
+    container: <container>
+    exec: <executable>
+    workdir: <container-workdir>
+    paths:
+      /workspace: <container-workdir>
+```
+
+## 4. Create CLAUDE.md
+Create a CLAUDE.md file at project root documenting:
+- Project overview and tech stack
+- Container topology (name, purpose, working directory, image)
+- Bridge command reference with examples for this project
+- Testing strategy (how to run tests)
+- "Do Not" section with multi-container gotchas:
+  - Do NOT install packages in Claude container (use bridge)
+  - Do NOT run commands directly (use bridge)
+  - Do NOT assume database is on localhost
+  - Do NOT mount sensitive directories
+
+Use the bridge command format: `bridge <command> <args>`
+
+## 5. Create Allowed Domains (Optional)
+If the project needs external API access, create `.aidevcontainer/allowed-domains.txt`:
+- Add package registries (registry.npmjs.org, pypi.org, etc.)
+- Add project-specific APIs
+- Default includes: Anthropic services, GitHub (auto-fetched)
+
+## After Setup
+Show me the commands to:
+1. Start the containers: `docker compose up -d claude`
+2. Run Claude interactively: `docker compose exec claude claude`
+3. Run in YOLO mode: `docker compose exec -e CLAUDE_YOLO=1 claude claude`
+````
+
 ## License
 
 MIT

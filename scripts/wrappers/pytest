@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# pytest wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge pytest "$@"
+else
+    # Find the real pytest binary (skip this wrapper)
+    SELF=$(command -v pytest)
+    for BIN in /usr/local/bin/pytest /usr/bin/pytest; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: pytest not found (BRIDGE_ENABLED not set and no local pytest installation)" >&2
+    exit 127
+fi

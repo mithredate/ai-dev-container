@@ -1,0 +1,17 @@
+#!/bin/sh
+# shellcheck shell=dash
+# poetry wrapper - routes to sidecar container via bridge when BRIDGE_ENABLED=1
+
+if [ "$BRIDGE_ENABLED" = "1" ]; then
+    exec bridge poetry "$@"
+else
+    # Find the real poetry binary (skip this wrapper)
+    SELF=$(command -v poetry)
+    for BIN in /usr/local/bin/poetry /usr/bin/poetry ~/.local/bin/poetry; do
+        if [ -x "$BIN" ] && [ "$BIN" != "$SELF" ]; then
+            exec "$BIN" "$@"
+        fi
+    done
+    echo "Error: poetry not found (BRIDGE_ENABLED not set and no local poetry installation)" >&2
+    exit 127
+fi
