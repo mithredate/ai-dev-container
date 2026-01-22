@@ -9,6 +9,19 @@ Converts existing PRDs to the prd.json format that Ralph uses for autonomous exe
 
 ---
 
+## What is Ralph Loop?
+
+Ralph loop is an autonomous agent system that spawns Claude Code instances to implement user stories one at a time. Each iteration:
+
+1. Spawns a fresh Claude Code instance with no memory of previous work
+2. Assigns it one user story to implement
+3. Verifies acceptance criteria
+4. Loops through remaining stories until all pass
+
+Because each Claude Code instance has a fresh context window, stories must be small enough to complete in a single iteration.
+
+---
+
 ## The Job
 
 **Convert mode:** Take a PRD (markdown file or text) and append stories to `prd.json` in your ralph directory.
@@ -32,6 +45,7 @@ Converts existing PRDs to the prd.json format that Ralph uses for autonomous exe
   "project": "[Project Name]",
   "branchName": "[type]/[short-description-kebab-case]",
   "description": "[Feature description from PRD title/intro]",
+  "storyIdPrefix": "US",
   "userStories": [
     {
       "id": "US-001",
@@ -40,10 +54,26 @@ Converts existing PRDs to the prd.json format that Ralph uses for autonomous exe
       "acceptanceCriteria": [
         "Criterion 1",
         "Criterion 2",
-        "Typecheck passes"
+        "Code quality checks pass",
+        "Tests pass (if applicable)"
+      ],
+      "testCases": [
+        {
+          "type": "happy_path",
+          "description": "Valid input produces expected output"
+        },
+        {
+          "type": "edge_case",
+          "description": "Empty input returns empty result"
+        },
+        {
+          "type": "validation",
+          "description": "Invalid input returns appropriate error"
+        }
       ],
       "priority": 1,
       "passes": false,
+      "attempts": 0,
       "notes": ""
     }
   ]
@@ -52,11 +82,30 @@ Converts existing PRDs to the prd.json format that Ralph uses for autonomous exe
 
 ---
 
+## Story ID Format
+
+**Ask the user for their preferred story ID format.** If not specified, default to `US-XXX`.
+
+Examples of valid formats:
+- `US-001`, `US-002`, `US-003` (default)
+- `DA-18`, `DA-19`, `DA-20`
+- `PROJ-100`, `PROJ-101`, `PROJ-102`
+- `T-1`, `T-2`, `T-3`
+
+The `storyIdPrefix` field in prd.json stores the prefix (e.g., "US", "DA", "PROJ", "T").
+
+When adding stories to an existing prd.json:
+1. Find the highest existing story number
+2. Continue from the next number
+3. Preserve the existing prefix
+
+---
+
 ## Story Size: The Number One Rule
 
-**Each story must be completable in ONE Ralph iteration (one context window).**
+**Each story must be completable in ONE Ralph loop iteration (one context window).**
 
-Ralph spawns a fresh Amp instance per iteration with no memory of previous work. If a story is too big, the LLM runs out of context before finishing and produces broken code.
+Ralph loop spawns a fresh Claude Code instance per iteration with no memory of previous work. If a story is too big, the LLM runs out of context before finishing and produces broken code.
 
 ### Right-sized stories:
 - Add a database column and migration
@@ -65,9 +114,9 @@ Ralph spawns a fresh Amp instance per iteration with no memory of previous work.
 - Add a filter dropdown to a list
 
 ### Too big (split these):
-- "Build the entire dashboard" - Split into: schema, queries, UI components, filters
-- "Add authentication" - Split into: schema, middleware, login UI, session handling
-- "Refactor the API" - Split into one story per endpoint or pattern
+- "Build the entire dashboard" → Split into: schema, queries, UI components, filters
+- "Add authentication" → Split into: schema, middleware, login UI, session handling
+- "Refactor the API" → Split into one story per endpoint or pattern
 
 **Rule of thumb:** If you cannot describe the change in 2-3 sentences, it is too big.
 
@@ -82,6 +131,7 @@ Stories execute in priority order. Earlier stories must not depend on later ones
 2. Server actions / backend logic
 3. UI components that use the backend
 4. Dashboard/summary views that aggregate data
+5. Documentation updates
 
 **Wrong order:**
 1. UI component (depends on schema that does not exist yet)
@@ -91,13 +141,13 @@ Stories execute in priority order. Earlier stories must not depend on later ones
 
 ## Acceptance Criteria: Must Be Verifiable
 
-Each criterion must be something Ralph can CHECK, not something vague.
+Each criterion must be something Claude Code can CHECK, not something vague.
 
 ### Good criteria (verifiable):
 - "Add `status` column to tasks table with default 'pending'"
 - "Filter dropdown has options: All, Active, Completed"
 - "Clicking delete shows confirmation dialog"
-- "Typecheck passes"
+- "Code quality checks pass"
 - "Tests pass"
 
 ### Bad criteria (vague):
@@ -106,33 +156,93 @@ Each criterion must be something Ralph can CHECK, not something vague.
 - "Good UX"
 - "Handles edge cases"
 
-### Always include as final criterion:
-```
-"Typecheck passes"
-```
+### Always include as final criteria:
 
-For stories with testable logic, also include:
-```
-"Tests pass"
-```
+**Code quality checks pass** - The specific checks depend on the project:
+- **Go:** `go fmt`, `go vet`, `golangci-lint`
+- **PHP:** `phpstan`, `php-cs-fixer`
+- **TypeScript/JavaScript:** `eslint`, `prettier`, `tsc --noEmit`
+- **Python:** `ruff`, `mypy`, `black`
+- **Rust:** `cargo fmt`, `cargo clippy`
+
+Claude Code should inspect the project to determine which checks apply.
+
+**Tests pass (if applicable)** - Include when:
+- The story adds or modifies testable logic
+- The project has an existing test suite
+- The acceptance criteria can be verified by automated tests
 
 ### For stories that change UI, also include:
 ```
 "Verify in browser using dev-browser skill"
 ```
 
-Frontend stories are NOT complete until visually verified. Ralph will use the dev-browser skill to navigate to the page, interact with the UI, and confirm changes work.
+Frontend stories are NOT complete until visually verified. Claude Code will use the dev-browser skill to navigate to the page, interact with the UI, and confirm changes work.
+
+---
+
+## Test Cases (Optional)
+
+Stories may include explicit test cases to guide implementation and verification:
+
+```json
+"testCases": [
+  {
+    "type": "happy_path",
+    "description": "Creating a task with valid data succeeds"
+  },
+  {
+    "type": "edge_case", 
+    "description": "Creating a task with maximum length title succeeds"
+  },
+  {
+    "type": "validation",
+    "description": "Creating a task with empty title returns validation error"
+  },
+  {
+    "type": "error",
+    "description": "Database connection failure returns 500 error"
+  }
+]
+```
+
+Test case types:
+- `happy_path` - Normal expected usage
+- `edge_case` - Boundary conditions, limits, unusual but valid inputs
+- `validation` - Invalid input handling
+- `error` - System failures, external service errors
+
+Test cases are optional. Include them when:
+- The PRD specifies specific scenarios to handle
+- The logic has known edge cases
+- Validation rules are defined
+
+---
+
+## Attempts and Notes Fields
+
+**`attempts`**: Tracks how many times Ralph loop has tried to complete this story. Starts at 0, incremented on each attempt. Useful for:
+- Identifying problematic stories that keep failing
+- Setting retry limits in Ralph loop configuration
+
+**`notes`**: Used by Ralph loop to record what happened during attempts. Examples:
+- "Attempt 1: Failed - missing dependency on UserService"
+- "Attempt 2: Tests failing on edge case with empty input"
+- "Blocked: Requires API key not available in environment"
+
+Claude Code should update notes after each attempt to help subsequent iterations understand what went wrong.
 
 ---
 
 ## Conversion Rules
 
 1. **Each user story becomes one JSON entry**
-2. **IDs**: Continue from existing stories (see "Adding to Existing prd.json" below)
+2. **Ask for story ID format** or continue from existing stories (see "Story ID Format" above)
 3. **Priority**: Recalculate for ALL stories based on dependency order
-4. **New stories**: `passes: false` and empty `notes`
+4. **New stories**: `passes: false`, `attempts: 0`, and empty `notes`
 5. **branchName**: Use conventional prefix (`feat/`, `fix/`, `chore/`, `refactor/`, `docs/`, `test/`) + short description in kebab-case
-6. **Always add**: "Typecheck passes" to every story's acceptance criteria
+6. **Always add**: "Code quality checks pass" to every story's acceptance criteria
+7. **Add when applicable**: "Tests pass" for stories with testable logic
 
 ---
 
@@ -143,7 +253,7 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 ### Steps:
 
 1. **Read existing prd.json** if it exists
-2. **Find the highest story ID** (e.g., if US-007 exists, next is US-008)
+2. **Find the highest story ID number** (e.g., if DA-019 exists, next is DA-020)
 3. **Keep all existing stories** - do not remove or modify them
 4. **Append new stories** with IDs continuing the sequence
 5. **Reprioritize ALL stories** (existing + new) based on dependency order
@@ -151,11 +261,11 @@ Frontend stories are NOT complete until visually verified. Ralph will use the de
 ### ID Sequencing Example:
 
 **Existing prd.json has:**
-- US-001, US-002, US-003
+- DA-018, DA-019, DA-020
 
 **New PRD adds 2 stories:**
-- New story 1 → US-004
-- New story 2 → US-005
+- New story 1 → DA-021
+- New story 2 → DA-022
 
 ### Priority Recalculation:
 
@@ -167,14 +277,31 @@ When adding new stories, analyze dependencies across ALL stories (existing + new
 4. Stories with `passes: true` should generally keep lower priorities (they're done)
 
 **Example:**
-- Existing US-001 (passes: true, priority: 1) - schema change
-- Existing US-002 (passes: false, priority: 2) - uses schema
-- New US-003 - new schema change (must run before US-002)
+- Existing DA-018 (passes: true, priority: 1) - schema change
+- Existing DA-019 (passes: false, priority: 2) - uses schema
+- New DA-021 - new schema change (must run before DA-019)
 
 After reprioritization:
-- US-001: priority 1 (done, schema)
-- US-003: priority 2 (new schema, must run before US-002)
-- US-002: priority 3 (depends on both schemas)
+- DA-018: priority 1 (done, schema)
+- DA-021: priority 2 (new schema, must run before DA-019)
+- DA-019: priority 3 (depends on both schemas)
+
+---
+
+## Handling PRD Updates
+
+When requirements change while stories are in progress:
+
+1. **Read the existing prd.json**
+2. **Identify all stories with `passes: false`** (incomplete stories)
+3. **Compare new requirements against incomplete stories**
+4. **Re-evaluate and update:**
+   - Modify acceptance criteria if requirements changed
+   - Add new stories for new requirements
+   - Mark stories as obsolete in notes if no longer needed (but don't delete)
+5. **Reprioritize all incomplete stories** based on new dependency order
+
+Claude Code should inspect the codebase to ensure updated stories reference correct existing patterns and are in a valid state.
 
 ---
 
@@ -192,14 +319,14 @@ When the user asks to **cleanup** or **archive completed stories**, follow these
 1. **Read current prd.json**
 2. **Identify stories with `passes: true`**
 3. **Archive them:**
-   - Create archive folder: `archive/YYYY-MM-DD-cleanup/`
-   - Save completed stories to `archive/YYYY-MM-DD-cleanup/completed-stories.json`
-   - Copy current `progress.txt` to archive
+   - Create archive folder: `archive/YYYY-MM-DD-HHmmss-cleanup/`
+   - Save completed stories to `archive/YYYY-MM-DD-HHmmss-cleanup/completed-stories.json`
+   - Copy current `progress.txt` to archive (if exists)
 4. **Update prd.json:**
    - Remove all stories with `passes: true`
    - Keep all stories with `passes: false`
    - Recalculate priorities for remaining stories (1, 2, 3, ...)
-5. **Reset progress.txt** with fresh header
+5. **Reset progress.txt** with fresh header (if applicable)
 
 ### Cleanup Example:
 
@@ -207,10 +334,10 @@ When the user asks to **cleanup** or **archive completed stories**, follow these
 ```json
 {
   "userStories": [
-    {"id": "US-001", "passes": true, "priority": 1},
-    {"id": "US-002", "passes": true, "priority": 2},
-    {"id": "US-003", "passes": false, "priority": 3},
-    {"id": "US-004", "passes": false, "priority": 4}
+    {"id": "DA-018", "passes": true, "priority": 1},
+    {"id": "DA-019", "passes": true, "priority": 2},
+    {"id": "DA-020", "passes": false, "priority": 3},
+    {"id": "DA-021", "passes": false, "priority": 4}
   ]
 }
 ```
@@ -219,24 +346,24 @@ When the user asks to **cleanup** or **archive completed stories**, follow these
 ```json
 {
   "userStories": [
-    {"id": "US-003", "passes": false, "priority": 1},
-    {"id": "US-004", "passes": false, "priority": 2}
+    {"id": "DA-020", "passes": false, "priority": 1},
+    {"id": "DA-021", "passes": false, "priority": 2}
   ]
 }
 ```
 
-**Archived (completed-stories.json):**
+**Archived (archive/2024-01-15-143052-cleanup/completed-stories.json):**
 ```json
 {
-  "archivedAt": "2024-01-15",
+  "archivedAt": "2024-01-15T14:30:52Z",
   "stories": [
-    {"id": "US-001", "passes": true, "priority": 1},
-    {"id": "US-002", "passes": true, "priority": 2}
+    {"id": "DA-018", "passes": true, "priority": 1},
+    {"id": "DA-019", "passes": true, "priority": 2}
   ]
 }
 ```
 
-Note: Story IDs are NOT renumbered during cleanup - US-003 stays US-003. Only priorities are recalculated.
+Note: Story IDs are NOT renumbered during cleanup - DA-020 stays DA-020. Only priorities are recalculated.
 
 ---
 
@@ -248,12 +375,13 @@ If a PRD has big features, split them:
 > "Add user notification system"
 
 **Split into:**
-1. US-001: Add notifications table to database
-2. US-002: Create notification service for sending notifications
-3. US-003: Add notification bell icon to header
-4. US-004: Create notification dropdown panel
-5. US-005: Add mark-as-read functionality
-6. US-006: Add notification preferences page
+1. DA-018: Add notifications table to database
+2. DA-019: Create notification service for sending notifications
+3. DA-020: Add notification bell icon to header
+4. DA-021: Create notification dropdown panel
+5. DA-022: Add mark-as-read functionality
+6. DA-023: Add notification preferences page
+7. DA-024: Update documentation for notification system
 
 Each is one focused change that can be completed and verified independently.
 
@@ -274,67 +402,113 @@ Add ability to mark tasks with different statuses.
 - Persist status in database
 ```
 
+**User specifies:** "Start from DA-018"
+
 **Output prd.json:**
 ```json
 {
   "project": "TaskApp",
   "branchName": "feat/task-status",
   "description": "Task Status Feature - Track task progress with status indicators",
+  "storyIdPrefix": "DA",
   "userStories": [
     {
-      "id": "US-001",
+      "id": "DA-018",
       "title": "Add status field to tasks table",
       "description": "As a developer, I need to store task status in the database.",
       "acceptanceCriteria": [
         "Add status column: 'pending' | 'in_progress' | 'done' (default 'pending')",
         "Generate and run migration successfully",
-        "Typecheck passes"
+        "Code quality checks pass"
       ],
+      "testCases": [],
       "priority": 1,
       "passes": false,
+      "attempts": 0,
       "notes": ""
     },
     {
-      "id": "US-002",
+      "id": "DA-019",
       "title": "Display status badge on task cards",
       "description": "As a user, I want to see task status at a glance.",
       "acceptanceCriteria": [
         "Each task card shows colored status badge",
         "Badge colors: gray=pending, blue=in_progress, green=done",
-        "Typecheck passes",
+        "Code quality checks pass",
         "Verify in browser using dev-browser skill"
       ],
+      "testCases": [],
       "priority": 2,
       "passes": false,
+      "attempts": 0,
       "notes": ""
     },
     {
-      "id": "US-003",
+      "id": "DA-020",
       "title": "Add status toggle to task list rows",
       "description": "As a user, I want to change task status directly from the list.",
       "acceptanceCriteria": [
         "Each row has status dropdown or toggle",
         "Changing status saves immediately",
         "UI updates without page refresh",
-        "Typecheck passes",
+        "Code quality checks pass",
+        "Tests pass",
         "Verify in browser using dev-browser skill"
+      ],
+      "testCases": [
+        {
+          "type": "happy_path",
+          "description": "Selecting new status updates task and persists to database"
+        },
+        {
+          "type": "edge_case",
+          "description": "Rapid status changes are handled correctly"
+        }
       ],
       "priority": 3,
       "passes": false,
+      "attempts": 0,
       "notes": ""
     },
     {
-      "id": "US-004",
+      "id": "DA-021",
       "title": "Filter tasks by status",
       "description": "As a user, I want to filter the list to see only certain statuses.",
       "acceptanceCriteria": [
         "Filter dropdown: All | Pending | In Progress | Done",
         "Filter persists in URL params",
-        "Typecheck passes",
+        "Code quality checks pass",
+        "Tests pass",
         "Verify in browser using dev-browser skill"
+      ],
+      "testCases": [
+        {
+          "type": "happy_path",
+          "description": "Selecting filter shows only matching tasks"
+        },
+        {
+          "type": "edge_case",
+          "description": "Filter with no matching tasks shows empty state"
+        }
       ],
       "priority": 4,
       "passes": false,
+      "attempts": 0,
+      "notes": ""
+    },
+    {
+      "id": "DA-022",
+      "title": "Update documentation for task status feature",
+      "description": "As a developer, I want documentation explaining the status feature.",
+      "acceptanceCriteria": [
+        "README updated with status feature usage",
+        "API documentation updated if applicable",
+        "Code quality checks pass"
+      ],
+      "testCases": [],
+      "priority": 5,
+      "passes": false,
+      "attempts": 0,
       "notes": ""
     }
   ]
@@ -349,12 +523,10 @@ Add ability to mark tasks with different statuses.
 
 1. Read the current `prd.json` if it exists
 2. Check if `branchName` differs from the new feature's branch name
-3. If different AND `progress.txt` has content beyond the header:
-    - Create archive folder: `archive/YYYY-MM-DD-feature-name/`
+3. If different AND there are stories with `passes: true` or `attempts > 0`:
+    - Create archive folder: `archive/YYYY-MM-DD-HHmmss-[feature-name]/`
     - Copy current `prd.json` and `progress.txt` to archive
     - Reset `progress.txt` with fresh header
-
-**The ralph.sh script handles this automatically** when you run it, but if you are manually updating prd.json between runs, archive first.
 
 ---
 
@@ -362,13 +534,16 @@ Add ability to mark tasks with different statuses.
 
 Before writing prd.json, verify:
 
+- [ ] **Asked user for story ID format** or found existing format in prd.json
 - [ ] **Read existing prd.json first** (if it exists)
-- [ ] **Story IDs continue from highest existing ID** (not starting from US-001)
-- [ ] **Previous run archived** (if prd.json exists with different branchName, archive it first)
+- [ ] **Story IDs continue from highest existing ID** (not restarting sequence)
+- [ ] **Previous run archived** (if prd.json exists with different branchName)
 - [ ] Each story is completable in one iteration (small enough)
 - [ ] **All priorities recalculated** based on dependencies (existing + new stories)
-- [ ] Stories are ordered by dependency (schema to backend to UI)
-- [ ] Every story has "Typecheck passes" as criterion
+- [ ] Stories are ordered by dependency (schema → backend → UI → docs)
+- [ ] Every story has "Code quality checks pass" as criterion
+- [ ] Stories with testable logic have "Tests pass" as criterion
 - [ ] UI stories have "Verify in browser using dev-browser skill" as criterion
 - [ ] Acceptance criteria are verifiable (not vague)
 - [ ] No story depends on a higher-priority story
+- [ ] New stories have `attempts: 0` and empty `notes`

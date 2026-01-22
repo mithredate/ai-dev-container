@@ -1,240 +1,174 @@
 ---
 name: prd
-description: "Generate a Product Requirements Document (PRD) for a new feature. Use when planning a feature, starting a new project, or when asked to create a PRD. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out."
+description: "Generate a Product Requirements Document (PRD) for a new feature. Use when planning a feature or starting a new project. Optimized for hand-off to autonomous agents. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out."
 ---
 
-# PRD Generator
+## PRD Generator
+Create detailed, technically robust Product Requirements Documents that integrate with existing codebases.
 
-Create detailed Product Requirements Documents that are clear, actionable, and suitable for implementation.
+### The Job
+1. **Discover** the existing codebase structure and patterns.
+2. **Receive** a feature description from the user.
+3. **Clarify** using 3-5 essential questions (with lettered options).
+4. **Generate** a structured PRD.
+5. **Validate** the PRD for completeness and soundness.
+6. **Save** to `tasks/prd-[feature-name].md`.
+
+> **Important:** Do NOT start implementing. Focus solely on the requirements.
 
 ---
 
-## The Job
+## Step 0: Codebase Discovery (REQUIRED)
 
-1. Receive a feature description from the user
-2. Ask 3-5 essential clarifying questions (with lettered options)
-3. Generate a structured PRD based on answers
-4. Save to `tasks/prd-[feature-name].md`
+Before asking clarifying questions, examine the repository to understand:
 
-**Important:** Do NOT start implementing. Just create the PRD.
+- **Tech stack** — Check `package.json`, `composer.json`, `go.mod`, etc.
+- **Existing patterns** — Repository pattern? Service layer? DDD?
+- **Test infrastructure** — Framework, existing helpers/factories
+- **Documentation style** — README structure, API docs format, changelog practices
+- **Similar features** — Find reference implementations to follow
+
+**Output a brief "Codebase Context" summary before proceeding.**
 
 ---
 
 ## Step 1: Clarifying Questions
 
-Ask only critical questions where the initial prompt is ambiguous. Focus on:
+Ask 3-5 critical questions to eliminate ambiguity:
 
-- **Problem/Goal:** What problem does this solve?
-- **Core Functionality:** What are the key actions?
-- **Scope/Boundaries:** What should it NOT do?
-- **Success Criteria:** How do we know it's done?
-
-### Format Questions Like This:
-
-```
-1. What is the primary goal of this feature?
-   A. Improve user onboarding experience
-   B. Increase user retention
-   C. Reduce support burden
-   D. Other: [please specify]
-
-2. Who is the target user?
-   A. New users only
-   B. Existing users only
-   C. All users
-   D. Admin users only
-
-3. What is the scope?
-   A. Minimal viable version
-   B. Full-featured implementation
-   C. Just the backend/API
-   D. Just the UI
-```
-
-This lets users respond with "1A, 2C, 3B" for quick iteration.
+* **Business Rules:** What logical constraints must never be broken?
+* **Invariants:** What technical conditions must remain true at all times?
+* **Scope Boundaries:** What should this feature definitely NOT do?
+* **State Transitions:** What happens to the data during this action?
+* **Integration Points:** Which existing features does this interact with?
 
 ---
 
 ## Step 2: PRD Structure
 
-Generate the PRD with these sections:
+### 1. Introduction & Goals
+* Brief description and the core problem solved.
+* **Goals:** Specific, measurable objectives.
 
-### 1. Introduction/Overview
-Brief description of the feature and the problem it solves.
+### 2. Codebase Context
+* **Tech Stack:** Framework, language version, key dependencies
+* **Patterns to Follow:** Existing patterns this feature must adhere to
+* **Reference Implementation:** Similar feature in codebase to use as template
 
-### 2. Goals
-Specific, measurable objectives (bullet list).
+### 3. Business Rules & Invariants
+* **Business Rules:** Policy-level constraints (e.g., "Only owners can delete projects")
+* **Invariants:** Logic-level constants (e.g., "Discount percentage must be between 0 and 100")
 
-### 3. User Stories
-Each story needs:
-- **Title:** Short descriptive name
-- **Description:** "As a [user], I want [feature] so that [benefit]"
-- **Acceptance Criteria:** Verifiable checklist of what "done" means
+### 4. User Stories
 
-Each story should be small enough to implement in one focused session.
+**The Golden Rule:** Each story must be small enough to complete in ONE focused session. If a story is too big, split it.
 
-**Format:**
-```markdown
-### US-001: [Title]
+> **Planning Principle:** When writing acceptance criteria, naturally include updates to existing tests, documentation, and related code. Don't treat these as separate concerns—they're part of completing the story.
+
+#### US-XXX: [Title]
 **Description:** As a [user], I want [feature] so that [benefit].
 
+**Invariants:**
+* [State/Condition that must be preserved]
+
 **Acceptance Criteria:**
-- [ ] Specific verifiable criterion
-- [ ] Another criterion
-- [ ] Typecheck/lint passes
-- [ ] **[UI stories only]** Verify in browser using dev-browser skill
-```
+* [ ] Specific verifiable criterion
+* [ ] Typecheck passes
+* [ ] All tests pass (new and existing)
+* [ ] **[UI only]** Verify in browser
 
-**Important:**
-- Acceptance criteria must be verifiable, not vague. "Works correctly" is bad. "Button shows confirmation dialog before deleting" is good.
-- **For any story with UI changes:** Always include "Verify in browser using dev-browser skill" as acceptance criteria. This ensures visual verification of frontend work.
+**Test Scenarios:**
+* **Happy Path:** [Standard successful flow]
+* **Edge Case:** [Boundary conditions]
+* **Negative Test:** [Intentional failure scenarios]
 
-### 4. Functional Requirements
-Numbered list of specific functionalities:
-- "FR-1: The system must allow users to..."
-- "FR-2: When a user clicks X, the system must..."
+### 5. Functional Requirements
+Numbered list of system behaviors (FR-1, FR-2, etc.).
 
-Be explicit and unambiguous.
+### 6. Dependency Order
+Group stories by logical order:
+1. Migrations & Schema
+2. Server Logic & APIs
+3. UI Components
+4. Integration & Final Pages
 
-### 5. Non-Goals (Out of Scope)
-What this feature will NOT include. Critical for managing scope.
-
-### 6. Design Considerations (Optional)
-- UI/UX requirements
-- Link to mockups if available
-- Relevant existing components to reuse
-
-### 7. Technical Considerations (Optional)
-- Known constraints or dependencies
-- Integration points with existing systems
-- Performance requirements
-
-### 8. Success Metrics
-How will success be measured?
-- "Reduce time to complete X by 50%"
-- "Increase conversion rate by 10%"
-
-### 9. Open Questions
-Remaining questions or areas needing clarification.
+### 7. Non-Goals
+Explicitly define boundaries to prevent scope creep.
 
 ---
 
-## Writing for Junior Developers
+## Step 3: Validation (REQUIRED)
 
-The PRD reader may be a junior developer or AI agent. Therefore:
+Before finalizing, critically review the PRD:
 
-- Be explicit and unambiguous
-- Avoid jargon or explain it
-- Provide enough detail to understand purpose and core logic
-- Number requirements for easy reference
-- Use concrete examples where helpful
+### Coverage Check
+- Do all user stories together fully satisfy the stated goals?
+- Are there any requirements mentioned in the introduction not covered by a story?
+- Are there implicit requirements (error handling, logging, permissions) missing?
+
+### Solution Assessment
+- Is this the simplest solution that meets the requirements?
+- Are there alternative approaches worth considering?
+- Could any stories be combined or split for better implementation?
+
+### Gap Analysis
+- What happens at the boundaries of this feature?
+- Are all user types/roles accounted for?
+- Are failure modes and recovery paths defined?
+
+### Technical Risk
+- Does this change introduce performance concerns (N+1 queries, large payloads)?
+- Are there concurrency or race condition risks?
+- Does this conflict with or complicate existing functionality?
+- Are there scaling limitations to flag?
+
+**Document any concerns or trade-offs in a "Risks & Considerations" section.**
 
 ---
 
-## Output
+## Planning Guidelines
 
-- **Format:** Markdown (`.md`)
-- **Location:** `tasks/`
-- **Filename:** `prd-[feature-name].md` (kebab-case)
+When writing user stories, the implementing agent should:
+
+* **Follow existing patterns** — Use the reference implementation as a template
+* **Update affected tests** — If changing behavior, update tests that cover it
+* **Update documentation** — If changing APIs or user-facing behavior, update relevant docs
+* **Maintain backward compatibility** — Unless explicitly breaking, existing functionality must keep working
+
+These are implicit expectations for every story, not separate checklist items.
 
 ---
 
-## Example PRD
+## Example User Story
 
-```markdown
-# PRD: Task Priority System
+### US-001: Add Project Status Field
+**Description:** As a developer, I need to track if a project is 'active' or 'archived' in the database.
 
-## Introduction
-
-Add priority levels to tasks so users can focus on what matters most. Tasks can be marked as high, medium, or low priority, with visual indicators and filtering to help users manage their workload effectively.
-
-## Goals
-
-- Allow assigning priority (high/medium/low) to any task
-- Provide clear visual differentiation between priority levels
-- Enable filtering and sorting by priority
-- Default new tasks to medium priority
-
-## User Stories
-
-### US-001: Add priority field to database
-**Description:** As a developer, I need to store task priority so it persists across sessions.
+**Invariants:**
+* A project status can only be 'active' or 'archived'.
+* Existing projects default to 'active'.
 
 **Acceptance Criteria:**
-- [ ] Add priority column to tasks table: 'high' | 'medium' | 'low' (default 'medium')
-- [ ] Generate and run migration successfully
-- [ ] Typecheck passes
+* [ ] Migration adds status column (string, default: 'active').
+* [ ] Schema/validation updated to reflect status enum.
+* [ ] Typecheck passes.
+* [ ] All tests pass.
 
-### US-002: Display priority indicator on task cards
-**Description:** As a user, I want to see task priority at a glance so I know what needs attention first.
-
-**Acceptance Criteria:**
-- [ ] Each task card shows colored priority badge (red=high, yellow=medium, gray=low)
-- [ ] Priority visible without hovering or clicking
-- [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
-
-### US-003: Add priority selector to task edit
-**Description:** As a user, I want to change a task's priority when editing it.
-
-**Acceptance Criteria:**
-- [ ] Priority dropdown in task edit modal
-- [ ] Shows current priority as selected
-- [ ] Saves immediately on selection change
-- [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
-
-### US-004: Filter tasks by priority
-**Description:** As a user, I want to filter the task list to see only high-priority items when I'm focused.
-
-**Acceptance Criteria:**
-- [ ] Filter dropdown with options: All | High | Medium | Low
-- [ ] Filter persists in URL params
-- [ ] Empty state message when no tasks match filter
-- [ ] Typecheck passes
-- [ ] Verify in browser using dev-browser skill
-
-## Functional Requirements
-
-- FR-1: Add `priority` field to tasks table ('high' | 'medium' | 'low', default 'medium')
-- FR-2: Display colored priority badge on each task card
-- FR-3: Include priority selector in task edit modal
-- FR-4: Add priority filter dropdown to task list header
-- FR-5: Sort by priority within each status column (high to medium to low)
-
-## Non-Goals
-
-- No priority-based notifications or reminders
-- No automatic priority assignment based on due date
-- No priority inheritance for subtasks
-
-## Technical Considerations
-
-- Reuse existing badge component with color variants
-- Filter state managed via URL search params
-- Priority stored in database, not computed
-
-## Success Metrics
-
-- Users can change priority in under 2 clicks
-- High-priority tasks immediately visible at top of lists
-- No regression in task list performance
-
-## Open Questions
-
-- Should priority affect task ordering within a column?
-- Should we add keyboard shortcuts for priority changes?
-```
+**Test Scenarios:**
+* **Happy Path:** Create project, verify status is 'active'.
+* **Edge Case:** Update status to 'archived', verify persistence.
+* **Negative Test:** Attempt to save 'deleted' as status; verify rejection.
 
 ---
 
 ## Checklist
 
-Before saving the PRD:
-
-- [ ] Asked clarifying questions with lettered options
-- [ ] Incorporated user's answers
-- [ ] User stories are small and specific
-- [ ] Functional requirements are numbered and unambiguous
-- [ ] Non-goals section defines clear boundaries
-- [ ] Saved to `tasks/prd-[feature-name].md`
+- [ ] **Discovery:** Did I examine the existing codebase before planning?
+- [ ] **Context:** Did I identify patterns and reference implementations?
+- [ ] **Clarification:** Did I ask 3-5 clarifying questions?
+- [ ] **No Code:** Did I avoid writing implementation code?
+- [ ] **Atomicity:** Is every story completable in a single session?
+- [ ] **Verifiability:** Does every story have binary (Pass/Fail) criteria?
+- [ ] **Coverage:** Does every story include Happy Path, Edge Case, and Negative Test?
+- [ ] **Validation:** Did I verify coverage, assess the solution, check for gaps, and flag technical risks?
+- [ ] **File saved:** `tasks/prd-[feature-name].md`
