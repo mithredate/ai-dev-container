@@ -67,6 +67,11 @@ services:
     image: claude-brain-sidecar:latest
     # Build from local Dockerfile if image not available:
     # build: ./path/to/ai-dev-container
+    # Build with custom working directory:
+    # build:
+    #   context: ./path/to/ai-dev-container
+    #   args:
+    #     CLAUDE_WORKDIR: /app
     depends_on:
       - socket-proxy
     environment:
@@ -76,8 +81,14 @@ services:
       BRIDGE_ENABLED: "1"
       # Required: Your Anthropic API key
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # Custom allowed domains file path (Optional)
+      # Override the default location for the firewall allowed domains list.
+      # Default: ${CLAUDE_WORKDIR}/.claude/allowed-domains.txt
+      #
+      # ALLOWED_DOMAINS_FILE: "/workspace/.claude/allowed-domains.txt"
     volumes:
-      # Mount your project at /workspace (Claude's working directory)
+      # Mount your project at the working directory (default: /workspace)
+      # If using custom CLAUDE_WORKDIR, update this path to match
       - .:/workspace
       # Named volume for Claude session persistence (per-project)
       # Credentials persist across container restarts without UID mismatch issues

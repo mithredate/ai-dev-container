@@ -68,11 +68,18 @@ ENV DOCKER_HOST=""
 # Set SHELL env var for Claude Code's Bash tool
 ENV SHELL=/bin/bash
 
-# Build arguments for configurable user UID/GID
+# Build arguments for configurable user UID/GID and working directory
 # Default to 501 (macOS default UID/GID) for seamless file ownership on macOS hosts
 # For Linux hosts, override with: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
 ARG CLAUDE_UID=501
 ARG CLAUDE_GID=501
+# Working directory - override in compose.yml build args
+# Example: docker compose build --build-arg CLAUDE_WORKDIR=/app
+ARG CLAUDE_WORKDIR=/workspace
+
+# Allowed domains file path (can be overridden in compose.yml environment)
+# Default path is relative to CLAUDE_WORKDIR
+ENV ALLOWED_DOMAINS_FILE="${CLAUDE_WORKDIR}/.aidevcontainer/allowed-domains.txt"
 
 # Create non-root user 'claude' with configurable UID/GID
 # This ensures files created by Claude in /workspace are owned by your host user
@@ -81,8 +88,8 @@ RUN addgroup -g ${CLAUDE_GID} claude && \
     mkdir -p /home/claude/.claude && \
     chown claude:claude /home/claude/.claude
 
-# Set working directory
-WORKDIR /workspace
+# Set working directory (configurable via CLAUDE_WORKDIR build arg)
+WORKDIR ${CLAUDE_WORKDIR}
 
 # Note: Container starts as root to allow firewall initialization.
 # The entrypoint script runs the firewall setup as root, then drops to 'claude' user.

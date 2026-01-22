@@ -9,8 +9,9 @@
 
 set -e
 
-# Configuration
-ALLOWED_DOMAINS_FILE="/workspace/.aidevcontainer/allowed-domains.txt"
+# Configuration (can be overridden via environment variables)
+ALLOWED_DOMAINS_FILE="${ALLOWED_DOMAINS_FILE:-/workspace/.claude/allowed-domains.txt}"
+
 IPSET_NAME="allowed_ips"
 
 # Default allowed domains (used if no custom config exists)
