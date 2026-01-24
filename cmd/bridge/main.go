@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"golang.org/x/term"
 )
@@ -63,20 +64,22 @@ func runCommand(config *Config, args []string) int {
 	cmdName := args[0]
 	cmdArgs := args[1:]
 
+	// Check for native override first
+	if execPath, isNative := config.ResolveCommand(cmdName); isNative {
+		return execNative(execPath, args)
+	}
+
 	// Look up command in config
 	cmd, found := config.Commands[cmdName]
 
 	if !found {
-		// Command not in config - use default container if set
-		if config.DefaultContainer == "" {
-			fmt.Fprintf(os.Stderr, "Error: unknown command '%s' and no default_container configured\n", cmdName)
-			return 1
+		// Command not in config and no override - fall through to native lookup
+		nativePath, err := exec.LookPath(cmdName)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: command '%s' not found in config and not available natively\n", cmdName)
+			return 127 // Standard "command not found" exit code
 		}
-		// Create a minimal command config using default container
-		cmd = Command{
-			Container: config.DefaultContainer,
-			Exec:      cmdName, // Use the command name as-is
-		}
+		return execNative(nativePath, args)
 	}
 
 	// Resolve container name (apply containers mapping)
@@ -125,6 +128,20 @@ func runCommand(config *Config, args []string) int {
 		return 1
 	}
 
+	return 0
+}
+
+// execNative executes a native binary using syscall.Exec, replacing the current process.
+// If syscall.Exec fails, it returns an error exit code.
+// The args parameter should include the command name as the first element (argv[0]).
+func execNative(execPath string, args []string) int {
+	// syscall.Exec replaces the current process, so this function only returns on error
+	err := syscall.Exec(execPath, args, os.Environ())
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: failed to exec '%s': %s\n", execPath, err)
+		return 1
+	}
+	// This line is never reached because syscall.Exec replaces the process
 	return 0
 }
 

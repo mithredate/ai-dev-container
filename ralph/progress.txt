@@ -56,3 +56,20 @@ Started: Sat Jan 24 14:33:14 CET 2026
 - All acceptance criteria verified (except integration tests which require docker compose not available in this environment)
 - Marked as passed since US-003 (which depends on it) was already passing
 ---
+
+## 2026-01-24 - #9/US-004
+- Modified `runCommand` in `cmd/bridge/main.go` to check `ResolveCommand` first for native overrides
+- Added `execNative` function using `syscall.Exec` to replace the current process with the native binary
+- Implemented fallthrough behavior: if command not in config and no override, use `exec.LookPath` to find native binary
+- Uses exit code 127 (standard "command not found") when command not found anywhere
+- Added test to `.test/run-tests.sh`: "echo fallthrough (native execution)" test
+
+- Files changed:
+  - `cmd/bridge/main.go` - Added syscall import, native override check, fallthrough logic, and execNative function
+  - `.test/run-tests.sh` - Added Test 3 for echo fallthrough
+
+- **Learnings for future iterations:**
+  - `syscall.Exec` completely replaces the current process - it never returns on success
+  - Exit code 127 is the standard Unix convention for "command not found"
+  - The bridge now has three execution paths: override (native), sidecar (docker exec), fallthrough (native lookup)
+---

@@ -81,8 +81,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "attempts": 0,
+      "passes": true,
+      "attempts": 1,
       "notes": "Native execution via syscall.Exec - builds on US-003"
     },
     {

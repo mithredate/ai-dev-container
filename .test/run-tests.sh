@@ -60,6 +60,16 @@ else
     fail "bridge go build"
 fi
 
+# Test 3: native fallthrough (command not in config, but available natively)
+echo ""
+echo "Test 3: echo fallthrough (native execution)"
+OUTPUT=$(docker compose exec -T claude bridge echo hello 2>&1)
+if [ "$OUTPUT" = "hello" ]; then
+    pass "bridge echo fallthrough"
+else
+    fail "bridge echo fallthrough (expected 'hello', got '$OUTPUT')"
+fi
+
 # Cleanup
 echo ""
 echo "Cleaning up..."
