@@ -26,7 +26,7 @@ FAILED=0
 
 # Build the test image
 echo "Building claude-sidecar-test image..."
-docker compose build --quiet
+docker compose build
 
 # Start containers
 echo "Starting test containers..."
