@@ -79,6 +79,26 @@ else
     fail "bridge go build from subdirectory"
 fi
 
+# Test 5: init-wrappers creates symlinks
+echo ""
+echo "Test 5: bridge --init-wrappers creates symlinks"
+TEST_WRAPPERS_DIR="/tmp/test-wrappers"
+# Create the directory and dispatcher
+docker compose exec -T claude mkdir -p "$TEST_WRAPPERS_DIR"
+docker compose exec -T claude cp /scripts/wrappers/dispatcher "$TEST_WRAPPERS_DIR/dispatcher"
+# Run init-wrappers
+if docker compose exec -T claude bridge --init-wrappers "$TEST_WRAPPERS_DIR" 2>&1 | grep -q "Created"; then
+    # Verify symlinks exist and point to dispatcher
+    GO_TARGET=$(docker compose exec -T claude readlink "$TEST_WRAPPERS_DIR/go" 2>/dev/null)
+    if [ "$GO_TARGET" = "dispatcher" ]; then
+        pass "bridge --init-wrappers creates symlinks"
+    else
+        fail "bridge --init-wrappers: symlink points to '$GO_TARGET', expected 'dispatcher'"
+    fi
+else
+    fail "bridge --init-wrappers did not report creation"
+fi
+
 # Cleanup
 echo ""
 echo "Cleaning up..."

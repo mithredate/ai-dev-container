@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 
 	"golang.org/x/term"
@@ -14,9 +15,10 @@ const version = "0.1.0"
 
 func main() {
 	var (
-		showHelp    bool
-		showVersion bool
-		configPath  string
+		showHelp     bool
+		showVersion  bool
+		configPath   string
+		initWrappers string
 	)
 
 	flag.BoolVar(&showHelp, "help", false, "Show this help message")
@@ -25,6 +27,7 @@ func main() {
 	flag.BoolVar(&showVersion, "v", false, "Show version (shorthand)")
 	flag.StringVar(&configPath, "config", "", "Path to bridge config file")
 	flag.StringVar(&configPath, "c", "", "Path to bridge config file (shorthand)")
+	flag.StringVar(&initWrappers, "init-wrappers", "", "Generate dispatcher symlinks in specified directory")
 
 	flag.Usage = printUsage
 	flag.Parse()
@@ -44,6 +47,12 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
 		os.Exit(1)
+	}
+
+	// Handle --init-wrappers flag
+	if initWrappers != "" {
+		exitCode := initWrappersCommand(config, initWrappers)
+		os.Exit(exitCode)
 	}
 
 	args := flag.Args()
@@ -174,21 +183,96 @@ func execNative(execPath string, args []string) int {
 	return 0
 }
 
+// initWrappersCommand generates dispatcher symlinks for all configured commands.
+// It creates symlinks in the specified directory, pointing to the dispatcher script.
+// Returns 0 on success, 1 on error.
+func initWrappersCommand(config *Config, dir string) int {
+	created, skipped, err := initWrappers(config, dir)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %s\n", err)
+		return 1
+	}
+	fmt.Fprintf(os.Stderr, "Created %d symlinks in %s", created, dir)
+	if skipped > 0 {
+		fmt.Fprintf(os.Stderr, " (%d already existed)", skipped)
+	}
+	fmt.Fprintln(os.Stderr)
+	return 0
+}
+
+// initWrappers creates dispatcher symlinks for all commands in config.
+// Returns (created count, skipped count, error).
+func initWrappers(config *Config, dir string) (int, int, error) {
+	dispatcherPath := filepath.Join(dir, "dispatcher")
+
+	// Verify dispatcher exists
+	if _, err := os.Stat(dispatcherPath); os.IsNotExist(err) {
+		return 0, 0, fmt.Errorf("dispatcher not found at %s", dispatcherPath)
+	}
+
+	// Collect all command names from both commands and overrides
+	commandNames := make(map[string]bool)
+	for name := range config.Commands {
+		commandNames[name] = true
+	}
+	for name := range config.Overrides {
+		commandNames[name] = true
+	}
+
+	created := 0
+	skipped := 0
+
+	for name := range commandNames {
+		symlinkPath := filepath.Join(dir, name)
+
+		// Check if symlink already exists and points to dispatcher
+		if target, err := os.Readlink(symlinkPath); err == nil {
+			// Symlink exists - check if it points to dispatcher
+			if target == "dispatcher" || target == dispatcherPath {
+				skipped++
+				continue
+			}
+			// Symlink exists but points elsewhere - remove it
+			if err := os.Remove(symlinkPath); err != nil {
+				return created, skipped, fmt.Errorf("failed to remove existing symlink %s: %w", symlinkPath, err)
+			}
+		} else if !os.IsNotExist(err) {
+			// File exists but is not a symlink - check if it's a regular file
+			if _, statErr := os.Stat(symlinkPath); statErr == nil {
+				// Skip non-symlink files (e.g., the dispatcher itself)
+				skipped++
+				continue
+			}
+		}
+
+		// Create symlink pointing to dispatcher (relative path)
+		if err := os.Symlink("dispatcher", symlinkPath); err != nil {
+			return created, skipped, fmt.Errorf("failed to create symlink %s: %w", symlinkPath, err)
+		}
+		created++
+	}
+
+	return created, skipped, nil
+}
+
 func printUsage() {
 	fmt.Fprintf(os.Stderr, `bridge - Execute commands in sidecar containers
 
 Usage:
   bridge [flags] <command> [args...]
+  bridge --init-wrappers <dir>
 
 Flags:
-  -c, --config string   Path to bridge config file (default: $SIDECAR_CONFIG_DIR/bridge.yaml)
-  -h, --help            Show this help message
-  -v, --version         Show version
+  -c, --config string        Path to bridge config file (default: $SIDECAR_CONFIG_DIR/bridge.yaml)
+  -h, --help                 Show this help message
+  -v, --version              Show version
+  --init-wrappers <dir>      Generate dispatcher symlinks in specified directory
 
 Examples:
   bridge npm install           Run npm install in the default container
   bridge php artisan migrate   Run php artisan migrate in the PHP container
   bridge --config ./my.yaml npm test
+  bridge --init-wrappers /scripts/wrappers   Generate symlinks at startup
 
 The bridge reads configuration from $SIDECAR_CONFIG_DIR/bridge.yaml (or BRIDGE_CONFIG env var).
 SIDECAR_CONFIG_DIR defaults to $PWD/.sidecar if not set.
