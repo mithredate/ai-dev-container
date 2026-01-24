@@ -138,3 +138,20 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - `os.Readlink` returns os.ErrNotExist if path doesn't exist OR if it's not a symlink - need to distinguish with os.Stat
   - Idempotency check should handle both relative ("dispatcher") and absolute paths to dispatcher
 ---
+
+## 2026-01-24 - #9/US-008
+- Added `init_wrappers()` function to `scripts/entrypoint.sh`
+- Function calls `bridge --init-wrappers /scripts/wrappers` at startup
+- Added call to `init_wrappers` in `main()` after `init_firewall`, before dropping to claude user
+- Removed `CLAUDE_STARTING` environment variable logic from `run_claude()` function
+- Added Test 6 to `.test/run-tests.sh` to verify symlinks exist after container starts
+
+- Files changed:
+  - `scripts/entrypoint.sh` - Added init_wrappers function and call, removed CLAUDE_STARTING
+  - `.test/run-tests.sh` - Added Test 6 for entrypoint symlink verification
+
+- **Learnings for future iterations:**
+  - The init_wrappers function was partially implemented but not called - always verify function is invoked
+  - CLAUDE_STARTING env var was a workaround for the old wrapper system - no longer needed with dispatcher + symlinks
+  - Entrypoint order matters: firewall first (needs root), then wrappers (needs bridge), then drop to user
+---
