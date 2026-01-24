@@ -1,0 +1,33 @@
+# Integration test compose configuration
+# Tests the bridge routing from claude container to golang sidecar
+
+services:
+  claude:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    container_name: test-claude
+    environment:
+      - SIDECAR_CONFIG_DIR=/workspace/.test
+      - DOCKER_HOST=unix:///var/run/docker.sock
+    volumes:
+      - workspace:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /workspace
+    # Keep container running for test commands
+    command: ["sleep", "infinity"]
+    # Start as root for firewall init, entrypoint drops to claude user
+    cap_add:
+      - NET_ADMIN
+
+  golang:
+    image: golang:1.24-alpine
+    container_name: test-golang
+    volumes:
+      - workspace:/workspace
+    working_dir: /workspace
+    # Keep container running for exec commands
+    command: ["sleep", "infinity"]
+
+volumes:
+  workspace:

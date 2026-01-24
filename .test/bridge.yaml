@@ -1,0 +1,17 @@
+# Integration test bridge configuration
+# Routes go commands to the test-golang sidecar container
+
+version: "1"
+
+# Container name mappings
+containers:
+  golang: test-golang
+
+# Command mappings
+commands:
+  go:
+    container: golang
+    exec: go
+    workdir: /workspace
+    paths:
+      /workspace: /workspace
