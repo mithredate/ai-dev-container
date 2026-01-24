@@ -11,7 +11,7 @@
 # Usage:
 # 1. Copy this file to your project
 # 2. Adjust the volumes/services to match your project structure
-# 3. Create .aidevcontainer/bridge.yaml with your command mappings
+# 3. Create .sidecar/bridge.yaml with your command mappings
 # 4. Run: docker-compose up -d
 
 version: "3.8"
@@ -68,7 +68,7 @@ services:
   claude:
     image: claude-brain-sidecar:latest
     # Build from local Dockerfile if image not available:
-    # build: ./path/to/ai-dev-container
+    # build: ./path/to/claude-sidecar
     depends_on:
       - socket-proxy
     environment:
@@ -79,10 +79,10 @@ services:
       # Optional: Your Anthropic API key
       # If not provided, you'll be prompted to authenticate when running Claude for the first time
       # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      # Base directory for ai-dev-container config files (bridge.yaml, allowed-domains.txt)
-      # Default: $PWD/.aidevcontainer (where PWD is the container's working_dir)
-      # Override this if your config folder is in a different location than working_dir/.aidevcontainer
-      # AIDEV_CONFIG_DIR: /workspaces/sample-project/.aidevcontainer
+      # Base directory for claude-sidecar config files (bridge.yaml, allowed-domains.txt)
+      # Default: $PWD/.sidecar (where PWD is the container's working_dir)
+      # Override this if your config folder is in a different location than working_dir/.sidecar
+      # SIDECAR_CONFIG_DIR: /workspaces/sample-project/.sidecar
     volumes:
       # Mount your project - the path here should match working_dir below
       - .:/workspaces/sample-project

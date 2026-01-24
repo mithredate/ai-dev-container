@@ -1,19 +1,19 @@
 ---
-name: ai-dev-container-installer
-description: "Set up Claude Brain Sidecar (ai-dev-container) integration in any Docker-based project. Use when: user asks to 'add claude sidecar', 'setup ai-dev-container', 'integrate claude brain', 'add claude to docker compose', or wants Claude Code running as a container service with bridge command routing to project containers."
+name: claude-sidecar-installer
+description: "Set up Claude Sidecar integration in any Docker-based project. Use when: user asks to 'add claude sidecar', 'setup claude-sidecar', 'integrate claude sidecar', 'add claude to docker compose', or wants Claude Code running as a container service with bridge command routing to project containers."
 ---
 
-# AI Dev Container Installer
+# Claude Sidecar Installer
 
-Set up Claude Brain Sidecar to run Claude Code in a container that delegates commands to project containers via Docker socket proxy.
+Set up Claude Sidecar to run Claude Code in a container that delegates commands to project containers via Docker socket proxy.
 
 ## Workflow
 
 1. Analyze project structure (tech stack, existing compose file, containers)
 2. Update/create compose.yml with required services
-3. Create `.aidevcontainer/bridge.yaml` with command mappings
+3. Create `.sidecar/bridge.yaml` with command mappings
 4. Create CLAUDE.md with project documentation
-5. Optionally create `.aidevcontainer/allowed-domains.txt` for firewall
+5. Optionally create `.sidecar/allowed-domains.txt` for firewall
 
 ## Step 1: Analyze Project
 
@@ -40,7 +40,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
 
   claude:
-    image: ghcr.io/mithredate/ai-dev-container:latest
+    image: ghcr.io/mithredate/claude-sidecar:latest
     depends_on:
       - socket-proxy
     stdin_open: true
@@ -61,7 +61,7 @@ volumes:
 
 ## Step 3: Create Bridge Configuration
 
-Create `.aidevcontainer/bridge.yaml`:
+Create `.sidecar/bridge.yaml`:
 
 ```yaml
 version: "1"
@@ -126,7 +126,7 @@ Run commands via bridge:
 
 ## Step 5: Allowed Domains (Optional)
 
-If project needs external API access, create `.aidevcontainer/allowed-domains.txt`:
+If project needs external API access, create `.sidecar/allowed-domains.txt`:
 
 ```
 # Package registries

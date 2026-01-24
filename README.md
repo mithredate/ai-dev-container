@@ -1,6 +1,6 @@
-# AI Dev Container
+# Claude Sidecar
 
-[![Build and Publish Docker Image](https://github.com/mithredate/ai-dev-container/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mithredate/ai-dev-container/actions/workflows/docker-publish.yml)
+[![Build and Publish Docker Image](https://github.com/mithredate/claude-sidecar/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/mithredate/claude-sidecar/actions/workflows/docker-publish.yml)
 
 A Docker image with Claude Code that delegates command execution to sidecar containers via a secure Docker socket proxy.
 
@@ -12,7 +12,7 @@ A Docker image with Claude Code that delegates command execution to sidecar cont
 claude
 /plugin add marketplace mithredate/claude-codex
 /plugin install development@claude-codex
-# Then type: install ai-dev-container
+# Then type: install claude-sidecar
 ```
 
 **Manual setup**: Copy [`examples/compose.yml`](examples/compose.yml) to your project and adjust paths/services.
@@ -34,7 +34,7 @@ Claude runs in its own container. When `BRIDGE_ENABLED=1`, a bridge script route
 
 ### Bridge (`bridge.yaml`)
 
-Create `.aidevcontainer/bridge.yaml` to map commands to containers. See [`examples/claude-bridge.yaml`](examples/claude-bridge.yaml) for the full schema with path mapping.
+Create `.sidecar/bridge.yaml` to map commands to containers. See [`examples/claude-bridge.yaml`](examples/claude-bridge.yaml) for the full schema with path mapping.
 
 Minimal example:
 
@@ -59,7 +59,7 @@ The container includes an optional firewall that whitelists allowed domains usin
 
 **Default allowed**: GitHub (dynamic IPs), npm, Anthropic APIs.
 
-**Customize**: Copy [`.aidevcontainer/allowed-domains.txt.example`](.aidevcontainer/allowed-domains.txt.example) to `.aidevcontainer/allowed-domains.txt` and add your domains.
+**Customize**: Copy [`.sidecar/allowed-domains.txt.example`](.sidecar/allowed-domains.txt.example) to `.sidecar/allowed-domains.txt` and add your domains.
 
 **Disable**: Remove the `cap_add` section from your compose file.
 
@@ -100,7 +100,7 @@ Web UI for monitoring Claude sessions. Configuration included in [`examples/comp
 | `BRIDGE_ENABLED` | `1` to route commands through bridge |
 | `CLAUDE_YOLO` | `1` for `--dangerously-skip-permissions` |
 | `ANTHROPIC_API_KEY` | Optional API key (otherwise authenticate interactively) |
-| `AIDEV_CONFIG_DIR` | Config directory (default: `$PWD/.aidevcontainer`) |
+| `SIDECAR_CONFIG_DIR` | Config directory (default: `$PWD/.sidecar`) |
 
 ## Security
 
@@ -112,7 +112,7 @@ Web UI for monitoring Claude sessions. Configuration included in [`examples/comp
 ## Building
 
 ```bash
-docker build -t ai-dev-container .
+docker build -t claude-sidecar .
 ```
 
 ## License

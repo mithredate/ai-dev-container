@@ -7,7 +7,7 @@ Started:
 - Shell scripts in `/scripts/` use POSIX sh (dash compatible), not bash
 - The entrypoint uses `exec` to replace the shell process with the target command
 - Container starts as root for firewall setup, use `run_as_user` to drop privileges to claude user
-- Config files now live in `.aidevcontainer/` (bridge.yaml, allowed-domains.txt)
+- Config files now live in `.sidecar/` (bridge.yaml, allowed-domains.txt)
 
 ---
 

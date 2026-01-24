@@ -53,8 +53,8 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
           labels: |
-            org.opencontainers.image.title=AI Dev Container
-            org.opencontainers.image.description=AI-powered development container
+            org.opencontainers.image.title=Claude Sidecar
+            org.opencontainers.image.description=Claude Code container with sidecar command routing
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5

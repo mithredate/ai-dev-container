@@ -13,17 +13,17 @@ const (
 	exampleConfigPath = "examples/claude-bridge.yaml"
 )
 
-// getDefaultConfigPath returns the default config path based on AIDEV_CONFIG_DIR
-// or falls back to PWD/.aidevcontainer/bridge.yaml
+// getDefaultConfigPath returns the default config path based on SIDECAR_CONFIG_DIR
+// or falls back to PWD/.sidecar/bridge.yaml
 func getDefaultConfigPath() string {
-	configDir := os.Getenv("AIDEV_CONFIG_DIR")
+	configDir := os.Getenv("SIDECAR_CONFIG_DIR")
 	if configDir == "" {
 		// Fall back to current working directory
 		pwd, err := os.Getwd()
 		if err != nil {
 			pwd = "."
 		}
-		configDir = pwd + "/.aidevcontainer"
+		configDir = pwd + "/.sidecar"
 	}
 	return configDir + "/bridge.yaml"
 }

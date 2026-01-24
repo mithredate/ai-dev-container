@@ -1,7 +1,7 @@
 # Claude Bridge Configuration Schema
 # ==================================
 # This file documents the YAML schema for configuring the claude-bridge
-# command routing system. Place your config at /workspace/.aidevcontainer/bridge.yaml
+# command routing system. Place your config at /workspace/.sidecar/bridge.yaml
 #
 # The bridge script uses this config to route commands from the Claude
 # container to the appropriate sidecar containers via Docker socket.

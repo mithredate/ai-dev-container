@@ -1,4 +1,4 @@
-# Claude Bridge Configuration for ai-dev-container
+# Claude Bridge Configuration for claude-sidecar
 # =================================================
 # This configuration routes Go commands to the golang sidecar container,
 # allowing Claude to run go build, go test, go vet, etc.
@@ -12,7 +12,7 @@ version: "1"
 # Container name mappings
 # Maps logical names to actual container names from compose.yaml
 containers:
-  golang: ai-dev-container-golang
+  golang: claude-sidecar-golang
 
 # Command mappings for Go development
 commands:

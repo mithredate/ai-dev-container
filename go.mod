@@ -1,4 +1,4 @@
-module github.com/mithredate/ai-dev-container
+module github.com/mithredate/claude-sidecar
 
 go 1.24.0
 

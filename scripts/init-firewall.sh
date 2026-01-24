@@ -3,17 +3,17 @@
 # Firewall Initialization Script
 # ===============================
 # Configures network isolation with allowed domains for the Claude container.
-# Reads custom domains from $AIDEV_CONFIG_DIR/allowed-domains.txt or uses defaults.
+# Reads custom domains from $SIDECAR_CONFIG_DIR/allowed-domains.txt or uses defaults.
 #
 # Must run as root with NET_ADMIN and NET_RAW capabilities.
 
 set -e
 
 # Configuration (can be overridden via environment variables)
-# AIDEV_CONFIG_DIR: Base directory for ai-dev-container config files
+# SIDECAR_CONFIG_DIR: Base directory for claude-sidecar config files
 # Set via docker-compose.yml environment section to match your project's mount point
-AIDEV_CONFIG_DIR="${AIDEV_CONFIG_DIR:-${PWD}/.aidevcontainer}"
-ALLOWED_DOMAINS_FILE="${ALLOWED_DOMAINS_FILE:-${AIDEV_CONFIG_DIR}/allowed-domains.txt}"
+SIDECAR_CONFIG_DIR="${SIDECAR_CONFIG_DIR:-${PWD}/.sidecar}"
+ALLOWED_DOMAINS_FILE="${ALLOWED_DOMAINS_FILE:-${SIDECAR_CONFIG_DIR}/allowed-domains.txt}"
 
 IPSET_NAME="allowed_ips"
 

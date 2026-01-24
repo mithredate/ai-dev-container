@@ -1,4 +1,4 @@
-# Docker Compose v2 configuration for ai-dev-container
+# Docker Compose v2 configuration for claude-sidecar
 # =====================================================
 # This compose file sets up:
 #   1. claude: The main Claude Code container (built from local Dockerfile)
@@ -18,7 +18,7 @@ services:
   # Docker socket proxy - limits Docker API access to exec operations only
   socket-proxy:
     image: tecnativa/docker-socket-proxy
-    container_name: ai-dev-container-socket-proxy
+    container_name: claude-sidecar-socket-proxy
     environment:
       # Only allow container inspection and exec operations
       - CONTAINERS=1
@@ -57,7 +57,7 @@ services:
       args:
         CLAUDE_UID: ${CLAUDE_UID:-501}
         CLAUDE_GID: ${CLAUDE_GID:-501}
-    container_name: ai-dev-container-claude
+    container_name: claude-sidecar-claude
     stdin_open: true
     tty: true
     # Required capabilities for firewall initialization (iptables/ipset)
@@ -67,41 +67,41 @@ services:
     environment:
       # Enable bridge wrappers to route commands to sidecar containers
       - BRIDGE_ENABLED=1
-      # Base directory for ai-dev-container config files (bridge.yaml, allowed-domains.txt)
+      # Base directory for claude-sidecar config files (bridge.yaml, allowed-domains.txt)
       # This is used by both the bridge and firewall scripts
-      - AIDEV_CONFIG_DIR=/workspaces/ai-dev-container/.aidevcontainer
+      - SIDECAR_CONFIG_DIR=/workspaces/claude-sidecar/.sidecar
       # Docker host via socket proxy for secure, limited Docker access
       - DOCKER_HOST=tcp://socket-proxy:2375
     volumes:
       # Mount current project directory as workspace
-      - .:/workspaces/ai-dev-container
+      - .:/workspaces/claude-sidecar
       # Named volume for Claude session persistence and config (per-project)
       - claude-config:/home/claude/.claude
       - claude-home:/home/claude/
       # Mount credentials file extracted from host (macOS keychain or Linux ~/.claude/.credentials.json)
       # See README for extraction instructions
       - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
-      - /dev/null:/workspaces/ai-dev-container/.env
-      - /dev/null:/workspaces/ai-dev-container/.credentials.json
+      - /dev/null:/workspaces/claude-sidecar/.env
+      - /dev/null:/workspaces/claude-sidecar/.credentials.json
     depends_on:
       - socket-proxy
       - golang
-    working_dir: /workspaces/ai-dev-container
+    working_dir: /workspaces/claude-sidecar
 
   # Go sidecar container for running go commands
   golang:
     image: golang:1.24-alpine
-    container_name: ai-dev-container-golang
+    container_name: claude-sidecar-golang
     command: ["sleep", "infinity"]
     volumes:
       # Mount current project directory (same as claude container)
-      - .:/workspaces/ai-dev-container
-    working_dir: /workspaces/ai-dev-container
+      - .:/workspaces/claude-sidecar
+    working_dir: /workspaces/claude-sidecar
 
   # Claude Code Viewer - web UI for monitoring Claude sessions
   viewer:
     image: node:20-alpine
-    container_name: ai-dev-container-viewer
+    container_name: claude-sidecar-viewer
     command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
     environment:
       - PORT=${VIEWER_PORT:-3000}

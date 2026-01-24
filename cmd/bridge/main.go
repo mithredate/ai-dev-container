@@ -135,7 +135,7 @@ Usage:
   bridge [flags] <command> [args...]
 
 Flags:
-  -c, --config string   Path to bridge config file (default: $AIDEV_CONFIG_DIR/bridge.yaml)
+  -c, --config string   Path to bridge config file (default: $SIDECAR_CONFIG_DIR/bridge.yaml)
   -h, --help            Show this help message
   -v, --version         Show version
 
@@ -144,7 +144,7 @@ Examples:
   bridge php artisan migrate   Run php artisan migrate in the PHP container
   bridge --config ./my.yaml npm test
 
-The bridge reads configuration from $AIDEV_CONFIG_DIR/bridge.yaml (or BRIDGE_CONFIG env var).
-AIDEV_CONFIG_DIR defaults to $PWD/.aidevcontainer if not set.
+The bridge reads configuration from $SIDECAR_CONFIG_DIR/bridge.yaml (or BRIDGE_CONFIG env var).
+SIDECAR_CONFIG_DIR defaults to $PWD/.sidecar if not set.
 `)
 }
