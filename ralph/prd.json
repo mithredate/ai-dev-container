@@ -22,8 +22,8 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
-      "attempts": 0,
+      "passes": true,
+      "attempts": 1,
       "notes": "First story - establishes baseline integration test. All subsequent stories must pass this test."
     },
     {

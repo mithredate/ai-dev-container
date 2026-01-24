@@ -14,3 +14,19 @@ Dynamic Command Routing with Native Overrides (feat/dynamic-command-routing)
 
 ---
 
+## 2026-01-24 - #9/US-001
+- Set up integration test infrastructure
+- Files changed:
+  - `.test/bridge.yaml` - Bridge config with go command routing to test-golang
+  - `.test/compose.yaml` - Docker compose with claude and golang containers
+  - `.test/run-tests.sh` - Test script that validates bridge routing
+  - `.test/workspace/main.go` - Simple Go program that prints "Hello"
+  - `.test/workspace/go.mod` - Go module file for workspace
+- **Learnings for future iterations:**
+  - The bridge uses static `workdir` from config, not caller's CWD (US-005 will fix this)
+  - Test files must be placed at path matching bridge.yaml workdir setting
+  - Docker compose cp requires destination directory to exist (create with mkdir -p first)
+  - Go modules require go.mod file even for simple single-file builds
+  - SIDECAR_CONFIG_DIR env var controls where bridge looks for bridge.yaml
+---
+
