@@ -73,13 +73,7 @@ ENV SHELL=/bin/bash
 # For Linux hosts, override with: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
 ARG CLAUDE_UID=501
 ARG CLAUDE_GID=501
-# Working directory - override in compose.yml build args
-# Example: docker compose build --build-arg CLAUDE_WORKDIR=/app
-ARG CLAUDE_WORKDIR=/workspace
 
-# Allowed domains file path (can be overridden in compose.yml environment)
-# Default path is relative to CLAUDE_WORKDIR
-ENV ALLOWED_DOMAINS_FILE="${CLAUDE_WORKDIR}/.aidevcontainer/allowed-domains.txt"
 
 # Create non-root user 'claude' with configurable UID/GID
 # This ensures files created by Claude in /workspace are owned by your host user
@@ -88,8 +82,9 @@ RUN addgroup -g ${CLAUDE_GID} claude && \
     mkdir -p /home/claude/.claude && \
     chown claude:claude /home/claude/.claude
 
-# Set working directory (configurable via CLAUDE_WORKDIR build arg)
-WORKDIR ${CLAUDE_WORKDIR}
+# Note: WORKDIR is intentionally not set here.
+# Each project specifies its own working directory via docker-compose.yml (working_dir: /app)
+# since mount points vary between projects (/app, /workspace, /workspaces/my-project, etc.)
 
 # Note: Container starts as root to allow firewall initialization.
 # The entrypoint script runs the firewall setup as root, then drops to 'claude' user.

@@ -67,25 +67,26 @@ services:
     environment:
       # Enable bridge wrappers to route commands to sidecar containers
       - BRIDGE_ENABLED=1
-      # Point bridge to the config file
-      - BRIDGE_CONFIG=/workspace/.aidevcontainer/bridge.yaml
+      # Base directory for ai-dev-container config files (bridge.yaml, allowed-domains.txt)
+      # This is used by both the bridge and firewall scripts
+      - AIDEV_CONFIG_DIR=/workspaces/ai-dev-container/.aidevcontainer
       # Docker host via socket proxy for secure, limited Docker access
       - DOCKER_HOST=tcp://socket-proxy:2375
     volumes:
       # Mount current project directory as workspace
-      - .:/workspace
+      - .:/workspaces/ai-dev-container
       # Named volume for Claude session persistence and config (per-project)
       - claude-config:/home/claude/.claude
       - claude-home:/home/claude/
       # Mount credentials file extracted from host (macOS keychain or Linux ~/.claude/.credentials.json)
       # See README for extraction instructions
       - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
-      - /dev/null:/workspace/.env
-      - /dev/null:/workspace/.credentials.json
+      - /dev/null:/workspaces/ai-dev-container/.env
+      - /dev/null:/workspaces/ai-dev-container/.credentials.json
     depends_on:
       - socket-proxy
       - golang
-    working_dir: /workspace
+    working_dir: /workspaces/ai-dev-container
 
   # Go sidecar container for running go commands
   golang:
@@ -94,8 +95,8 @@ services:
     command: ["sleep", "infinity"]
     volumes:
       # Mount current project directory (same as claude container)
-      - .:/workspace
-    working_dir: /workspace
+      - .:/workspaces/ai-dev-container
+    working_dir: /workspaces/ai-dev-container
 
   # Claude Code Viewer - web UI for monitoring Claude sessions
   viewer:

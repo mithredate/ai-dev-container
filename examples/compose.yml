@@ -79,17 +79,16 @@ services:
       DOCKER_HOST: tcp://socket-proxy:2375
       # Enable bridge wrappers to route commands to sidecar containers
       BRIDGE_ENABLED: "1"
-      # Required: Your Anthropic API key
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
-      # Custom allowed domains file path (Optional)
-      # Override the default location for the firewall allowed domains list.
-      # Default: ${CLAUDE_WORKDIR}/.claude/allowed-domains.txt
-      #
-      # ALLOWED_DOMAINS_FILE: "/workspace/.claude/allowed-domains.txt"
+      # Optional: Your Anthropic API key
+      # If not provided, you'll be prompted to authenticate when running Claude for the first time
+      # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      # Base directory for ai-dev-container config files (bridge.yaml, allowed-domains.txt)
+      # Default: $PWD/.aidevcontainer (where PWD is the container's working_dir)
+      # Override this if your config folder is in a different location than working_dir/.aidevcontainer
+      # AIDEV_CONFIG_DIR: /workspaces/sample-project/.aidevcontainer
     volumes:
-      # Mount your project at the working directory (default: /workspace)
-      # If using custom CLAUDE_WORKDIR, update this path to match
-      - .:/workspace
+      # Mount your project - the path here should match working_dir below
+      - .:/workspaces/sample-project
       # Named volume for Claude session persistence (per-project)
       # Credentials persist across container restarts without UID mismatch issues
       - claude-config:/home/claude/.claude
@@ -97,6 +96,9 @@ services:
       # macOS: security find-generic-password -s "Claude Code-credentials" -w > .credentials.json
       # Linux: cp ~/.claude/.credentials.json .credentials.json
       # - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
+    # Set the working directory to match your volume mount point
+    # Different projects may use /app, /workspace, /workspaces/my-project, etc.
+    working_dir: /workspaces/sample-project
     stdin_open: true
     tty: true
     # Usage:
