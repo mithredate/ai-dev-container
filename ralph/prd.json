@@ -42,9 +42,9 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "attempts": 1,
-      "notes": "Implementation verified - go build, go vet, and unit tests pass"
+      "notes": "run integration test"
     },
     {
       "id": "#9/US-003",
