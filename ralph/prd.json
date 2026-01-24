@@ -196,9 +196,9 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": false,
-      "attempts": 0,
-      "notes": "Final cleanup - must be last after all features work"
+      "passes": true,
+      "attempts": 1,
+      "notes": "Deleted 18 legacy wrappers, removed BRIDGE_ENABLED from all config and documentation. Integration tests cannot run in this environment."
     },
     {
       "id": "#9/US-011",

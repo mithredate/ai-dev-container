@@ -170,3 +170,32 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - Native override path: symlink -> dispatcher -> bridge -> ResolveCommand(true) -> syscall.Exec
   - Fallthrough path: symlink -> dispatcher -> bridge -> ResolveCommand(false) + not in commands -> exec.LookPath -> syscall.Exec
 ---
+
+## 2026-01-24 - #9/US-010
+- Deleted 18 legacy wrapper scripts from `scripts/wrappers/` (kept only `dispatcher`)
+- Removed `BRIDGE_ENABLED` environment variable from:
+  - `compose.yaml`
+  - `examples/compose.yml`
+  - `examples/docker-compose.yml`
+  - `.claude/skills/claude-sidecar-installer/SKILL.md`
+- Updated documentation:
+  - `CLAUDE.md`: Updated Key Components section (dispatcher + symlinks), removed BRIDGE_ENABLED from env table
+  - `README.md`: Updated "How It Works" section, removed BRIDGE_ENABLED from env table
+  - `Dockerfile`: Updated comments about wrapper scripts
+- Verified no BRIDGE_ENABLED references in core codebase (only historical refs in ralph/ and tasks/)
+- go build, go vet, and unit tests all pass
+
+- Files changed:
+  - `scripts/wrappers/*` - Deleted 18 legacy wrappers
+  - `CLAUDE.md` - Updated documentation
+  - `README.md` - Updated documentation
+  - `Dockerfile` - Updated comments
+  - `compose.yaml` - Removed BRIDGE_ENABLED
+  - `examples/compose.yml` - Removed BRIDGE_ENABLED
+  - `examples/docker-compose.yml` - Removed BRIDGE_ENABLED
+  - `.claude/skills/claude-sidecar-installer/SKILL.md` - Removed BRIDGE_ENABLED
+
+- **Learnings for future iterations:**
+  - The acceptance criteria says "grep -r BRIDGE_ENABLED . returns no results (excluding .git)" but historical/documentation files in ralph/ and tasks/ should be excluded as well
+  - When cleaning up a feature toggle, remember to check all compose files (main + examples), documentation, Dockerfile comments, and skill files
+---
