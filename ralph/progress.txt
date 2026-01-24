@@ -113,3 +113,28 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - Shellcheck can be downloaded as a static binary from GitHub releases if not installed
   - The pattern `CMD=$(basename "$0"); exec bridge "$CMD" "$@"` is all you need for symlink-based routing
 ---
+
+## 2026-01-24 - #9/US-007
+- Added `--init-wrappers <dir>` flag to bridge CLI in `cmd/bridge/main.go`
+- Added `initWrappers` function that:
+  - Reads config to get all commands and overrides
+  - Creates symlinks pointing to dispatcher (relative path)
+  - Is idempotent: skips symlinks already pointing to dispatcher
+  - Replaces symlinks pointing elsewhere
+  - Skips non-symlink files (like dispatcher itself)
+  - Prints summary to stderr with created/skipped counts
+- Added comprehensive unit tests in `cmd/bridge/main_test.go`:
+  - `TestInitWrappers` - table-driven tests for all scenarios
+  - `TestInitWrappers_Idempotent` - explicit idempotency test
+- Added Test 5 to `.test/run-tests.sh` for integration testing
+
+- Files changed:
+  - `cmd/bridge/main.go` - Added --init-wrappers flag, initWrappersCommand, and initWrappers function
+  - `cmd/bridge/main_test.go` - Added TestInitWrappers and TestInitWrappers_Idempotent tests
+  - `.test/run-tests.sh` - Added Test 5 for symlink generation
+
+- **Learnings for future iterations:**
+  - Use relative symlinks (`os.Symlink("dispatcher", symlinkPath)`) rather than absolute paths for portability
+  - `os.Readlink` returns os.ErrNotExist if path doesn't exist OR if it's not a symlink - need to distinguish with os.Stat
+  - Idempotency check should handle both relative ("dispatcher") and absolute paths to dispatcher
+---

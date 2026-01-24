@@ -144,9 +144,9 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": false,
-      "attempts": 0,
-      "notes": "Symlink generation - builds on US-006"
+      "passes": true,
+      "attempts": 1,
+      "notes": "Implemented --init-wrappers flag with idempotent symlink generation. Unit tests and integration test added."
     },
     {
       "id": "#9/US-008",
