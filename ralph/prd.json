@@ -214,9 +214,9 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "attempts": 0,
-      "notes": "Documentation updates - can run after cleanup"
+      "passes": true,
+      "attempts": 1,
+      "notes": "Added overrides section with claude command to both example and project config files. Updated CLAUDE.md with new architecture docs. Integration tests cannot run in this environment."
     }
   ]
 }

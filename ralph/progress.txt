@@ -199,3 +199,25 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - The acceptance criteria says "grep -r BRIDGE_ENABLED . returns no results (excluding .git)" but historical/documentation files in ralph/ and tasks/ should be excluded as well
   - When cleaning up a feature toggle, remember to check all compose files (main + examples), documentation, Dockerfile comments, and skill files
 ---
+
+## 2026-01-24 - #9/US-011
+- Added `overrides` section to `examples/claude-bridge.yaml` with:
+  - Comprehensive documentation comments explaining override behavior
+  - `claude` override pointing to `/usr/local/bin/claude`
+- Added `overrides` section to `.sidecar/bridge.yaml` with `claude` override
+- Updated `CLAUDE.md` with new architecture documentation:
+  - Changed "wrapper scripts" to "single dispatcher + symlinks" in Project Purpose
+  - Added "supports native overrides" to Project Purpose
+  - Updated Project Structure to show dispatcher + generated symlinks
+  - Expanded Key Components to document three execution paths (native overrides, sidecar routing, fallthrough)
+- Verified go build, go vet, and unit tests pass
+
+- Files changed:
+  - `examples/claude-bridge.yaml` - Added overrides section with documentation
+  - `.sidecar/bridge.yaml` - Added overrides section with claude
+  - `CLAUDE.md` - Updated architecture documentation
+
+- **Learnings for future iterations:**
+  - Documentation for a feature should explain the three execution paths: override → sidecar → fallthrough
+  - The `claude` command is a good canonical example of a native override - it should never route through docker exec
+---
