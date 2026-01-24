@@ -73,3 +73,26 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - Exit code 127 is the standard Unix convention for "command not found"
   - The bridge now has three execution paths: override (native), sidecar (docker exec), fallthrough (native lookup)
 ---
+
+## 2026-01-24 - #9/US-005
+- Added `TranslatePathWithMatch` method to `cmd/bridge/config.go` that returns both translated path and whether a mapping matched
+- Added `determineWorkdir` function to `cmd/bridge/main.go` for CWD translation
+- Workdir priority: 1) Translated CWD (if mapping matches), 2) Static workdir, 3) Current CWD
+- Key insight: identity mappings (e.g., `/workspace: /workspace`) should still use the translated path, not fall back to static workdir
+- Added `TestTranslatePathWithMatch` and `TestDetermineWorkdir` unit tests
+- Added Test 4 to run-tests.sh for go build from subdirectory
+- Created `.test/workspace/subpkg/helper.go` for subdirectory test
+
+- Files changed:
+  - `cmd/bridge/config.go` - Added TranslatePathWithMatch method
+  - `cmd/bridge/config_test.go` - Added TestTranslatePathWithMatch tests
+  - `cmd/bridge/main.go` - Added determineWorkdir function, replaced static workdir logic
+  - `cmd/bridge/main_test.go` - New file with TestDetermineWorkdir tests
+  - `.test/run-tests.sh` - Added Test 4 for subdirectory build
+  - `.test/workspace/subpkg/helper.go` - New test file
+
+- **Learnings for future iterations:**
+  - When checking if path translation occurred, must distinguish between "no mapping matched" and "mapping matched but result is same"
+  - Use `TranslatePathWithMatch` when you need to know IF a mapping applied, not just what the result is
+  - The testable version pattern (`determineWorkdirWithCwd`) is useful for testing functions that depend on `os.Getwd()`
+---
