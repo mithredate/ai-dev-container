@@ -33,14 +33,14 @@ docker compose exec claude claude            # Run Claude interactively
 ## Key Components
 
 - **Bridge** (`cmd/bridge/`): Go binary that executes `docker exec` to route commands. Config from `$SIDECAR_CONFIG_DIR/bridge.yaml`
-- **Wrappers** (`scripts/wrappers/`): Shell scripts that call `bridge <cmd> <args>` when `BRIDGE_ENABLED=1`
+- **Dispatcher** (`scripts/wrappers/dispatcher`): Single script that routes all commands through the bridge
+- **Symlinks**: Generated at startup via `bridge --init-wrappers`, point to dispatcher
 - **Firewall** (`scripts/init-firewall.sh`): Uses ipset + iptables to whitelist domains. Config from `$SIDECAR_CONFIG_DIR/allowed-domains.txt`
 
 ## Environment Variables
 
 | Variable | Purpose |
 |----------|---------|
-| `BRIDGE_ENABLED` | Set `1` to route commands through bridge |
 | `SIDECAR_CONFIG_DIR` | Config directory (default: `$PWD/.sidecar`) |
 | `CLAUDE_YOLO` | Set `1` for `--dangerously-skip-permissions` |
 

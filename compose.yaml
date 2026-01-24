@@ -65,8 +65,6 @@ services:
       - NET_ADMIN
       - NET_RAW
     environment:
-      # Enable bridge wrappers to route commands to sidecar containers
-      - BRIDGE_ENABLED=1
       # Base directory for claude-sidecar config files (bridge.yaml, allowed-domains.txt)
       # This is used by both the bridge and firewall scripts
       - SIDECAR_CONFIG_DIR=/workspaces/claude-sidecar/.sidecar

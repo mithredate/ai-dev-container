@@ -53,10 +53,8 @@ COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
 COPY --chmod=755 scripts/init-firewall.sh /scripts/init-firewall.sh
 
-# Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
-# These scripts route commands through the bridge when BRIDGE_ENABLED=1
-# The node wrapper has special handling via CLAUDE_STARTING env var to allow Claude Code
-# (a Node.js app) to start with native node, while routing subsequent node calls through the bridge
+# Copy dispatcher script to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
+# Symlinks are generated at startup via bridge --init-wrappers, pointing to the dispatcher
 COPY --chmod=755 scripts/wrappers /scripts/wrappers/
 
 # Prepend wrappers directory to PATH so wrappers take precedence

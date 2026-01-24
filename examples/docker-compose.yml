@@ -74,8 +74,6 @@ services:
     environment:
       # Connect to Docker via the socket proxy
       DOCKER_HOST: tcp://socket-proxy:2375
-      # Enable bridge wrappers to route commands to sidecar containers
-      BRIDGE_ENABLED: "1"
       # Optional: Your Anthropic API key
       # If not provided, you'll be prompted to authenticate when running Claude for the first time
       # ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
