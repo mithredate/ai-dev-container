@@ -5,8 +5,9 @@ Headless Claude Code container that routes commands to sidecar containers via a 
 ## Project Purpose
 
 Provides a Docker image with Claude Code that:
-- Uses wrapper scripts to intercept binary calls (go, php, npm, etc.)
+- Uses a single dispatcher + symlinks to intercept binary calls (go, php, npm, etc.)
 - Forwards calls to a Go bridge that routes them to the correct sidecar container
+- Supports native overrides for commands that should run locally (e.g., `claude`)
 - Provides secure Docker socket access via proxy
 - Includes network firewall with allowed domain whitelist
 
@@ -17,7 +18,9 @@ cmd/bridge/         # Go bridge binary (main.go, config.go)
 scripts/
   entrypoint.sh     # Container entrypoint (firewall init, drops to claude user)
   init-firewall.sh  # iptables + ipset firewall setup
-  wrappers/         # Command wrappers that route to bridge
+  wrappers/
+    dispatcher      # Single script that routes all commands through bridge
+    <symlinks>      # Generated at startup, point to dispatcher
 .sidecar/           # Config dir (bridge.yaml, allowed-domains.txt)
 examples/           # Example compose and bridge configs
 ```
@@ -32,7 +35,10 @@ docker compose exec claude claude            # Run Claude interactively
 
 ## Key Components
 
-- **Bridge** (`cmd/bridge/`): Go binary that executes `docker exec` to route commands. Config from `$SIDECAR_CONFIG_DIR/bridge.yaml`
+- **Bridge** (`cmd/bridge/`): Go binary that routes commands. Supports three execution paths:
+  1. Native overrides - commands configured in `overrides` run locally via `syscall.Exec`
+  2. Sidecar routing - commands configured in `commands` run via `docker exec`
+  3. Fallthrough - unknown commands attempt native execution via `exec.LookPath`
 - **Dispatcher** (`scripts/wrappers/dispatcher`): Single script that routes all commands through the bridge
 - **Symlinks**: Generated at startup via `bridge --init-wrappers`, point to dispatcher
 - **Firewall** (`scripts/init-firewall.sh`): Uses ipset + iptables to whitelist domains. Config from `$SIDECAR_CONFIG_DIR/allowed-domains.txt`
