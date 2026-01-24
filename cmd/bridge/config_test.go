@@ -191,3 +191,98 @@ func TestValidate_OverridesField(t *testing.T) {
 		})
 	}
 }
+
+func TestResolveCommand(t *testing.T) {
+	tests := []struct {
+		name           string
+		config         Config
+		commandName    string
+		expectExecPath string
+		expectIsNative bool
+	}{
+		{
+			name: "override hit - returns native path",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{
+					"echo":   {Native: "/bin/echo"},
+					"claude": {Native: "/usr/local/bin/claude"},
+				},
+			},
+			commandName:    "echo",
+			expectExecPath: "/bin/echo",
+			expectIsNative: true,
+		},
+		{
+			name: "sidecar routing - command in commands but not overrides",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{
+					"echo": {Native: "/bin/echo"},
+				},
+			},
+			commandName:    "go",
+			expectExecPath: "",
+			expectIsNative: false,
+		},
+		{
+			name: "unknown command fallthrough - not in commands or overrides",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{
+					"echo": {Native: "/bin/echo"},
+				},
+			},
+			commandName:    "unknown",
+			expectExecPath: "",
+			expectIsNative: false,
+		},
+		{
+			name: "config with nil overrides",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: nil,
+			},
+			commandName:    "go",
+			expectExecPath: "",
+			expectIsNative: false,
+		},
+		{
+			name: "config with empty overrides map",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{},
+			},
+			commandName:    "go",
+			expectExecPath: "",
+			expectIsNative: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			execPath, isNative := tt.config.ResolveCommand(tt.commandName)
+			if execPath != tt.expectExecPath {
+				t.Errorf("expected execPath '%s', got '%s'", tt.expectExecPath, execPath)
+			}
+			if isNative != tt.expectIsNative {
+				t.Errorf("expected isNative %v, got %v", tt.expectIsNative, isNative)
+			}
+		})
+	}
+}

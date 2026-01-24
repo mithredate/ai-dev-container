@@ -175,3 +175,19 @@ func (cmd *Command) TranslateArgs(args []string) []string {
 	}
 	return result
 }
+
+// ResolveCommand checks if a command should be executed natively or routed to a sidecar.
+// It checks overrides first, then commands.
+// Returns (nativePath, true) if command has a native override.
+// Returns ("", false) if command should route to sidecar (in commands) or fall through (unknown).
+func (c *Config) ResolveCommand(name string) (execPath string, isNative bool) {
+	// Check overrides first - native execution takes priority
+	if c.Overrides != nil {
+		if override, ok := c.Overrides[name]; ok {
+			return override.Native, true
+		}
+	}
+
+	// Command not in overrides - return false to indicate sidecar routing or fallthrough
+	return "", false
+}
