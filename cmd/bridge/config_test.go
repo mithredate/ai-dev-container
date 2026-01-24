@@ -1,0 +1,193 @@
+package main
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
+
+func TestLoadConfig_WithOverrides(t *testing.T) {
+	// Create a temporary config file with overrides
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "bridge.yaml")
+
+	configContent := `
+version: "1"
+commands:
+  go:
+    container: golang
+    exec: go
+overrides:
+  echo:
+    native: /bin/echo
+  claude:
+    native: /usr/local/bin/claude
+`
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
+	}
+
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	// Verify overrides were parsed correctly
+	if len(config.Overrides) != 2 {
+		t.Errorf("expected 2 overrides, got %d", len(config.Overrides))
+	}
+
+	echoOverride, ok := config.Overrides["echo"]
+	if !ok {
+		t.Error("expected 'echo' override to exist")
+	} else if echoOverride.Native != "/bin/echo" {
+		t.Errorf("expected echo native to be '/bin/echo', got '%s'", echoOverride.Native)
+	}
+
+	claudeOverride, ok := config.Overrides["claude"]
+	if !ok {
+		t.Error("expected 'claude' override to exist")
+	} else if claudeOverride.Native != "/usr/local/bin/claude" {
+		t.Errorf("expected claude native to be '/usr/local/bin/claude', got '%s'", claudeOverride.Native)
+	}
+}
+
+func TestLoadConfig_WithoutOverrides(t *testing.T) {
+	// Create a config without overrides section (should still work)
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "bridge.yaml")
+
+	configContent := `
+version: "1"
+commands:
+  go:
+    container: golang
+    exec: go
+`
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
+	}
+
+	config, err := LoadConfig(configPath)
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+
+	// Overrides should be nil or empty when not specified
+	if config.Overrides != nil && len(config.Overrides) > 0 {
+		t.Errorf("expected no overrides, got %d", len(config.Overrides))
+	}
+}
+
+func TestLoadConfig_OverrideValidation_EmptyNative(t *testing.T) {
+	// Create a config with an override that has empty native path
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "bridge.yaml")
+
+	configContent := `
+version: "1"
+commands:
+  go:
+    container: golang
+    exec: go
+overrides:
+  echo:
+    native: ""
+`
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
+	}
+
+	_, err := LoadConfig(configPath)
+	if err == nil {
+		t.Error("expected validation error for empty native path")
+	}
+}
+
+func TestLoadConfig_OverrideValidation_MissingNative(t *testing.T) {
+	// Create a config with an override that has no native field
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "bridge.yaml")
+
+	configContent := `
+version: "1"
+commands:
+  go:
+    container: golang
+    exec: go
+overrides:
+  echo:
+`
+	if err := os.WriteFile(configPath, []byte(configContent), 0644); err != nil {
+		t.Fatalf("failed to write test config: %v", err)
+	}
+
+	_, err := LoadConfig(configPath)
+	if err == nil {
+		t.Error("expected validation error for missing native field")
+	}
+}
+
+func TestValidate_OverridesField(t *testing.T) {
+	tests := []struct {
+		name      string
+		config    Config
+		expectErr bool
+		errMsg    string
+	}{
+		{
+			name: "valid config with overrides",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{
+					"echo": {Native: "/bin/echo"},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "valid config without overrides",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+			},
+			expectErr: false,
+		},
+		{
+			name: "invalid override - empty native",
+			config: Config{
+				Version: "1",
+				Commands: map[string]Command{
+					"go": {Container: "golang", Exec: "go"},
+				},
+				Overrides: map[string]Override{
+					"echo": {Native: ""},
+				},
+			},
+			expectErr: true,
+			errMsg:    "override 'echo': missing required field 'native'",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.config.Validate()
+			if tt.expectErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+				} else if tt.errMsg != "" && err.Error() != tt.errMsg {
+					t.Errorf("expected error message '%s', got '%s'", tt.errMsg, err.Error())
+				}
+			} else {
+				if err != nil {
+					t.Errorf("unexpected error: %v", err)
+				}
+			}
+		})
+	}
+}

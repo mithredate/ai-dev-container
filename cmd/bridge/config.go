@@ -30,10 +30,17 @@ func getDefaultConfigPath() string {
 
 // Config represents the bridge configuration file.
 type Config struct {
-	Version          string             `yaml:"version"`
-	DefaultContainer string             `yaml:"default_container"`
-	Containers       map[string]string  `yaml:"containers"`
-	Commands         map[string]Command `yaml:"commands"`
+	Version          string              `yaml:"version"`
+	DefaultContainer string              `yaml:"default_container"`
+	Containers       map[string]string   `yaml:"containers"`
+	Commands         map[string]Command  `yaml:"commands"`
+	Overrides        map[string]Override `yaml:"overrides"`
+}
+
+// Override represents a native command override configuration.
+// When a command has an override, it executes natively instead of via docker exec.
+type Override struct {
+	Native string `yaml:"native"`
 }
 
 // Command represents a command mapping configuration.
@@ -102,6 +109,13 @@ func (c *Config) Validate() error {
 		}
 		if cmd.Exec == "" {
 			return fmt.Errorf("command '%s': missing required field 'exec'", name)
+		}
+	}
+
+	// Validate overrides
+	for name, override := range c.Overrides {
+		if override.Native == "" {
+			return fmt.Errorf("override '%s': missing required field 'native'", name)
 		}
 	}
 
