@@ -96,3 +96,20 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - Use `TranslatePathWithMatch` when you need to know IF a mapping applied, not just what the result is
   - The testable version pattern (`determineWorkdirWithCwd`) is useful for testing functions that depend on `os.Getwd()`
 ---
+
+## 2026-01-24 - #9/US-006
+- Created `scripts/wrappers/dispatcher` - unified dispatcher script
+- Script uses `basename "$0"` to extract command name
+- Script execs `bridge <cmd> "$@"` - simple and direct
+- Made script executable with chmod +x
+- Verified with shellcheck 0.11.0 - no issues found
+- Verified go build and go vet pass
+
+- Files changed:
+  - `scripts/wrappers/dispatcher` - New unified dispatcher script
+
+- **Learnings for future iterations:**
+  - The dispatcher is intentionally simple - all complexity is in the bridge (Go)
+  - Shellcheck can be downloaded as a static binary from GitHub releases if not installed
+  - The pattern `CMD=$(basename "$0"); exec bridge "$CMD" "$@"` is all you need for symlink-based routing
+---
