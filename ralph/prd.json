@@ -43,8 +43,8 @@
       ],
       "priority": 2,
       "passes": false,
-      "attempts": 0,
-      "notes": "Config schema change - must not break existing functionality"
+      "attempts": 1,
+      "notes": "./test.run-tests.sh should be tested"
     },
     {
       "id": "#9/US-003",
@@ -61,8 +61,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
-      "attempts": 0,
+      "passes": true,
+      "attempts": 1,
       "notes": "Resolution logic - builds on US-002"
     },
     {

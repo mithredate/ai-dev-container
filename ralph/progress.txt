@@ -1,3 +1,51 @@
 # Ralph Progress Log
 Started: Sat Jan 24 14:33:14 CET 2026
 ---
+
+## Codebase Patterns
+- Use `docker exec -w /workspaces/claude-sidecar claude-sidecar-golang go ...` to run Go commands (bridge routing doesn't work inside the claude container for building the bridge itself)
+- Integration tests require docker compose on the host machine - cannot be run from inside the claude container
+- Config tests should cover: parsing with feature, parsing without feature (backwards compat), validation errors for invalid config
+
+---
+
+## 2026-01-24 - #9/US-002
+- Added `Override` struct with `Native string` field to `cmd/bridge/config.go`
+- Added `Overrides map[string]Override` to `Config` struct
+- Added validation in `Validate()` to ensure native path is non-empty when override exists
+- Created comprehensive unit tests in `cmd/bridge/config_test.go`:
+  - `TestLoadConfig_WithOverrides` - verifies override parsing
+  - `TestLoadConfig_WithoutOverrides` - verifies backwards compatibility
+  - `TestLoadConfig_OverrideValidation_EmptyNative` - verifies validation catches empty native
+  - `TestLoadConfig_OverrideValidation_MissingNative` - verifies validation catches missing native
+  - `TestValidate_OverridesField` - table-driven tests for validation
+
+- Files changed:
+  - `cmd/bridge/config.go` - Added Override struct and Overrides field
+  - `cmd/bridge/config_test.go` - New file with unit tests
+
+- **Learnings for future iterations:**
+  - The `BRIDGE_ENABLED=1` env var causes `go` commands to route through the bridge, which creates a chicken-and-egg problem when building the bridge itself
+  - Use direct `docker exec claude-sidecar-golang` to run Go commands
+  - Integration tests (`.test/run-tests.sh`) need docker compose and must be run from the host, not inside the container
+---
+
+## 2026-01-24 - #9/US-003
+- Added `ResolveCommand(name string) (execPath string, isNative bool)` method to Config struct
+- Method checks overrides first, returns native path if found
+- Returns empty string and false for sidecar routing or unknown command fallthrough
+- Added comprehensive table-driven unit test `TestResolveCommand` with cases:
+  - `override hit - returns native path`
+  - `sidecar routing - command in commands but not overrides`
+  - `unknown command fallthrough - not in commands or overrides`
+  - `config with nil overrides`
+  - `config with empty overrides map`
+
+- Files changed:
+  - `cmd/bridge/config.go` - Added ResolveCommand method
+  - `cmd/bridge/config_test.go` - Added TestResolveCommand tests
+
+- **Learnings for future iterations:**
+  - The ResolveCommand method only cares about overrides - commands in `Commands` map are handled by the caller
+  - Keep resolution logic simple - just check overrides and return, let caller decide what to do with the result
+---
