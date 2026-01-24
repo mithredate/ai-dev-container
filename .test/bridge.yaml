@@ -15,3 +15,8 @@ commands:
     workdir: /workspace
     paths:
       /workspace: /workspace
+
+# Native overrides - these execute locally instead of routing to sidecar
+overrides:
+  echo:
+    native: /bin/echo
