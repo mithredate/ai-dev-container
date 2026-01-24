@@ -1,5 +1,8 @@
 # Ralph Progress Log
-Started:
+Started: 2026-01-24
+
+## Current Feature
+Dynamic Command Routing with Native Overrides (feat/dynamic-command-routing)
 
 ## Codebase Patterns
 - This is a Go project with Docker containerization for Claude Code
@@ -9,16 +12,5 @@ Started:
 - Container starts as root for firewall setup, use `run_as_user` to drop privileges to claude user
 - Config files now live in `.sidecar/` (bridge.yaml, allowed-domains.txt)
 
----
-
-## 2026-01-22 - Documentation Update
-- Added "One-Session Setup Prompt" section to readme.md
-- Prompt guides Claude to set up the complete integration in a single session
-- Generic enough to work with any tech stack (Go, PHP, Laravel, TypeScript, Nuxt, etc.)
-- Covers: compose.yml updates, bridge.yaml creation, CLAUDE.md documentation, allowed-domains.txt
-- **Learnings for future iterations:**
-  - The examples directory contains comprehensive templates for reference
-  - Bridge configuration supports path mappings for different container workdirs
-  - CLAUDE.md template in examples/ has a good "Do Not" section for multi-container gotchas
 ---
 
