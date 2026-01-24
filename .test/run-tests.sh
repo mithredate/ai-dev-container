@@ -99,6 +99,18 @@ else
     fail "bridge --init-wrappers did not report creation"
 fi
 
+# Test 6: symlinks exist after container starts (entrypoint init_wrappers)
+echo ""
+echo "Test 6: symlinks exist after container starts (entrypoint init_wrappers)"
+# The entrypoint should have called init_wrappers at startup
+# Check that symlinks exist in /scripts/wrappers
+GO_SYMLINK_TARGET=$(docker compose exec -T claude readlink /scripts/wrappers/go 2>/dev/null || echo "")
+if [ "$GO_SYMLINK_TARGET" = "dispatcher" ]; then
+    pass "entrypoint init_wrappers created symlinks"
+else
+    fail "entrypoint init_wrappers: /scripts/wrappers/go not pointing to dispatcher (got '$GO_SYMLINK_TARGET')"
+fi
+
 # Cleanup
 echo ""
 echo "Cleaning up..."
