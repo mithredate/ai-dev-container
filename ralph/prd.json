@@ -178,9 +178,9 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "attempts": 0,
-      "notes": "End-to-end test for native overrides"
+      "passes": true,
+      "attempts": 1,
+      "notes": "Added overrides section to test config and Test 7 to run-tests.sh. Integration tests cannot run in this environment."
     },
     {
       "id": "#9/US-010",

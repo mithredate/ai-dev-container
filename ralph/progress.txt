@@ -154,3 +154,19 @@ Started: Sat Jan 24 14:33:14 CET 2026
   - CLAUDE_STARTING env var was a workaround for the old wrapper system - no longer needed with dispatcher + symlinks
   - Entrypoint order matters: firewall first (needs root), then wrappers (needs bridge), then drop to user
 ---
+
+## 2026-01-24 - #9/US-009
+- Added `overrides` section to `.test/bridge.yaml` with `echo: native: /bin/echo`
+- Added Test 7 to `.test/run-tests.sh` for end-to-end native override testing via symlink
+- Test verifies that the echo symlink is created by init_wrappers and executes natively
+- The test flow: symlink -> dispatcher -> bridge -> ResolveCommand -> syscall.Exec to /bin/echo
+
+- Files changed:
+  - `.test/bridge.yaml` - Added overrides section with echo
+  - `.test/run-tests.sh` - Added Test 7 for native override execution
+
+- **Learnings for future iterations:**
+  - Test 3 (fallthrough) and Test 7 (native override) test different paths: fallthrough is for commands NOT in config, native override is for commands IN overrides
+  - Native override path: symlink -> dispatcher -> bridge -> ResolveCommand(true) -> syscall.Exec
+  - Fallthrough path: symlink -> dispatcher -> bridge -> ResolveCommand(false) + not in commands -> exec.LookPath -> syscall.Exec
+---
