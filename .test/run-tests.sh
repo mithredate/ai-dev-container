@@ -70,6 +70,15 @@ else
     fail "bridge echo fallthrough (expected 'hello', got '$OUTPUT')"
 fi
 
+# Test 4: go build from subdirectory (tests CWD translation)
+echo ""
+echo "Test 4: go build from subdirectory (CWD translation)"
+if docker compose exec -T -w /workspace/subpkg claude bridge go build ./... 2>&1; then
+    pass "bridge go build from subdirectory"
+else
+    fail "bridge go build from subdirectory"
+fi
+
 # Cleanup
 echo ""
 echo "Cleaning up..."

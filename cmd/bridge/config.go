@@ -139,8 +139,16 @@ func (c *Config) ResolveContainer(name string) string {
 // If no mapping matches, the original path is returned unchanged.
 // Longer prefixes are matched first to handle nested mappings correctly.
 func (cmd *Command) TranslatePath(path string) string {
+	translated, _ := cmd.TranslatePathWithMatch(path)
+	return translated
+}
+
+// TranslatePathWithMatch translates a path and indicates if a mapping matched.
+// Returns (translatedPath, true) if a path mapping matched (even if result is same).
+// Returns (originalPath, false) if no path mapping matched.
+func (cmd *Command) TranslatePathWithMatch(path string) (string, bool) {
 	if len(cmd.Paths) == 0 {
-		return path
+		return path, false
 	}
 
 	// Find the longest matching prefix for correct nested path handling
@@ -156,9 +164,9 @@ func (cmd *Command) TranslatePath(path string) string {
 	}
 
 	if longestPrefix != "" {
-		return longestTarget + path[len(longestPrefix):]
+		return longestTarget + path[len(longestPrefix):], true
 	}
-	return path
+	return path, false
 }
 
 // TranslateArgs translates all path arguments using the command's path mappings.

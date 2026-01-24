@@ -99,10 +99,10 @@ func runCommand(config *Config, args []string) int {
 		dockerArgs = append(dockerArgs, "-t")
 	}
 
-	// Add workdir if specified
-	if cmd.Workdir != "" {
-		dockerArgs = append(dockerArgs, "-w", cmd.Workdir)
-	}
+	// Determine working directory for docker exec
+	// Priority: 1) Translated CWD, 2) Static workdir from config, 3) Current CWD
+	workdir := determineWorkdir(&cmd)
+	dockerArgs = append(dockerArgs, "-w", workdir)
 
 	// Add container name
 	dockerArgs = append(dockerArgs, containerName)
@@ -129,6 +129,35 @@ func runCommand(config *Config, args []string) int {
 	}
 
 	return 0
+}
+
+// determineWorkdir determines the working directory to use for docker exec.
+// Priority: 1) Translated CWD (if a path mapping matches)
+//           2) Static workdir from config (if set and no mapping matched)
+//           3) Current CWD (as fallback)
+func determineWorkdir(cmd *Command) string {
+	cwd, err := os.Getwd()
+	if err != nil {
+		// If we can't get CWD, fall back to config workdir or root
+		if cmd.Workdir != "" {
+			return cmd.Workdir
+		}
+		return "/"
+	}
+
+	// Try to translate the current working directory
+	translatedCwd, matched := cmd.TranslatePathWithMatch(cwd)
+
+	// If a path mapping matched, use the translated path (even if same as original)
+	if matched {
+		return translatedCwd
+	}
+
+	// No mapping matched - use static workdir if set, otherwise use CWD
+	if cmd.Workdir != "" {
+		return cmd.Workdir
+	}
+	return cwd
 }
 
 // execNative executes a native binary using syscall.Exec, replacing the current process.
