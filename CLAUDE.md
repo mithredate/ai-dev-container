@@ -57,3 +57,7 @@ The `ralph/` directory contains an autonomous agent loop for feature development
 When working on features:
 1. Read `./ralph/claude.prompt.md` for current task context
 2. Keep `./ralph/progress.txt` updated with progress
+
+## References
+
+- More about claude code (claude binary inside the claude container): ./agent-docs/claude-code.md
