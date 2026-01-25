@@ -6,17 +6,27 @@ version: "1"
 # Container name mappings
 containers:
   golang: test-golang
+  node: test-node
 
 # Command mappings
 commands:
   go:
     container: golang
     exec: go
-    workdir: /workspace
+    workdir: /app
     paths:
-      /workspace: /workspace
+      /workspaces/test/go-test-app: /app
+
+  node:
+    container: node
+    exec: node
+    workdir: /app
+    paths:
+      /workspaces/test/node-test-app: /app
 
 # Native overrides - these execute locally instead of routing to sidecar
 overrides:
   echo:
-    native: /bin/echo
+    claude: /bin/echo
+  claude:
+    claude: /usr/local/bin/claude

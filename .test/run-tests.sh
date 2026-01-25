@@ -36,16 +36,10 @@ docker compose up -d
 echo "Waiting for containers..."
 sleep 3
 
-# Copy test files into volume
-echo "Copying test files..."
-docker compose exec -T claude mkdir -p /workspace/.test
-docker compose cp bridge.yaml claude:/workspace/.test/bridge.yaml
-docker compose cp workspace/. claude:/workspace/
-
 # Test 1: go version via bridge
 echo ""
 echo "Test 1: go version via bridge"
-if docker compose exec -T claude bridge go version 2>&1 | grep -q "go version"; then
+if docker compose exec -T claude go version 2>&1 | grep -q "go version"; then
     pass "bridge go version"
 else
     fail "bridge go version"
@@ -54,7 +48,7 @@ fi
 # Test 2: go build via bridge
 echo ""
 echo "Test 2: go build via bridge"
-if docker compose exec -T claude bridge go build -o /dev/null ./main.go 2>&1; then
+if docker compose exec -T -w /workspaces/test/go-test-app claude go build -o /dev/null ./main.go 2>&1; then
     pass "bridge go build"
 else
     fail "bridge go build"
@@ -73,7 +67,7 @@ fi
 # Test 4: go build from subdirectory (tests CWD translation)
 echo ""
 echo "Test 4: go build from subdirectory (CWD translation)"
-if docker compose exec -T -w /workspace/subpkg claude bridge go build ./... 2>&1; then
+if docker compose exec -T -w /workspaces/test/go-test-app/cmd claude go build ./... 2>&1; then
     pass "bridge go build from subdirectory"
 else
     fail "bridge go build from subdirectory"
