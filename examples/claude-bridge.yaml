@@ -125,25 +125,6 @@ commands:
     container: db
     exec: psql
 
-# Native Overrides (optional)
-# ==========================
-# Commands listed here execute locally in the Claude container instead of
-# being routed to a sidecar container. This is useful for:
-#   - The 'claude' command itself (should not route through docker exec)
-#   - System utilities that need to run locally (echo, cat, etc.)
-#   - Commands where latency matters and the binary exists locally
-#
-# Each override entry requires:
-#   - native: (required) Absolute path to the local binary
-#
-# The bridge checks overrides BEFORE checking the commands section.
-# If a command has an override, it uses syscall.Exec to run the native
-# binary directly (the bridge process is replaced by the native binary).
-overrides:
-  # Claude CLI - always run locally, never route to sidecar
-  claude:
-    native: /usr/local/bin/claude
-
 # Usage Examples:
 # ==============
 # After configuring this file, use the bridge command:

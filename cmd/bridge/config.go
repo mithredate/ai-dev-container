@@ -30,17 +30,10 @@ func getDefaultConfigPath() string {
 
 // Config represents the bridge configuration file.
 type Config struct {
-	Version          string              `yaml:"version"`
-	DefaultContainer string              `yaml:"default_container"`
-	Containers       map[string]string   `yaml:"containers"`
-	Commands         map[string]Command  `yaml:"commands"`
-	Overrides        map[string]Override `yaml:"overrides"`
-}
-
-// Override represents a native command override configuration.
-// When a command has an override, it executes natively instead of via docker exec.
-type Override struct {
-	Native string `yaml:"native"`
+	Version          string             `yaml:"version"`
+	DefaultContainer string             `yaml:"default_container"`
+	Containers       map[string]string  `yaml:"containers"`
+	Commands         map[string]Command `yaml:"commands"`
 }
 
 // Command represents a command mapping configuration.
@@ -112,13 +105,6 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	// Validate overrides
-	for name, override := range c.Overrides {
-		if override.Native == "" {
-			return fmt.Errorf("override '%s': missing required field 'native'", name)
-		}
-	}
-
 	return nil
 }
 
@@ -184,18 +170,3 @@ func (cmd *Command) TranslateArgs(args []string) []string {
 	return result
 }
 
-// ResolveCommand checks if a command should be executed natively or routed to a sidecar.
-// It checks overrides first, then commands.
-// Returns (nativePath, true) if command has a native override.
-// Returns ("", false) if command should route to sidecar (in commands) or fall through (unknown).
-func (c *Config) ResolveCommand(name string) (execPath string, isNative bool) {
-	// Check overrides first - native execution takes priority
-	if c.Overrides != nil {
-		if override, ok := c.Overrides[name]; ok {
-			return override.Native, true
-		}
-	}
-
-	// Command not in overrides - return false to indicate sidecar routing or fallthrough
-	return "", false
-}

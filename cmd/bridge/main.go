@@ -73,11 +73,6 @@ func runCommand(config *Config, args []string) int {
 	cmdName := args[0]
 	cmdArgs := args[1:]
 
-	// Check for native override first
-	if execPath, isNative := config.ResolveCommand(cmdName); isNative {
-		return execNative(execPath, args)
-	}
-
 	// Look up command in config
 	cmd, found := config.Commands[cmdName]
 
@@ -210,12 +205,9 @@ func initWrappers(config *Config, dir string) (int, int, error) {
 		return 0, 0, fmt.Errorf("dispatcher not found at %s", dispatcherPath)
 	}
 
-	// Collect all command names from both commands and overrides
+	// Collect all command names
 	commandNames := make(map[string]bool)
 	for name := range config.Commands {
-		commandNames[name] = true
-	}
-	for name := range config.Overrides {
 		commandNames[name] = true
 	}
 

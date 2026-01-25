@@ -7,7 +7,6 @@ Headless Claude Code container that routes commands to sidecar containers via a 
 Provides a Docker image with Claude Code that:
 - Uses a single dispatcher + symlinks to intercept binary calls (go, php, npm, etc.)
 - Forwards calls to a Go bridge that routes them to the correct sidecar container
-- Supports native overrides for commands that should run locally (e.g., `claude`)
 - Provides secure Docker socket access via proxy
 - Includes network firewall with allowed domain whitelist
 
@@ -35,10 +34,9 @@ docker compose exec claude claude            # Run Claude interactively
 
 ## Key Components
 
-- **Bridge** (`cmd/bridge/`): Go binary that routes commands. Supports three execution paths:
-  1. Native overrides - commands configured in `overrides` run locally via `syscall.Exec`
-  2. Sidecar routing - commands configured in `commands` run via `docker exec`
-  3. Fallthrough - unknown commands attempt native execution via `exec.LookPath`
+- **Bridge** (`cmd/bridge/`): Go binary that routes commands. Supports two execution paths:
+  1. Sidecar routing - commands configured in `commands` run via `docker exec`
+  2. Fallthrough - unknown commands attempt native execution via `exec.LookPath`
 - **Dispatcher** (`scripts/wrappers/dispatcher`): Single script that routes all commands through the bridge
 - **Symlinks**: Generated at startup via `bridge --init-wrappers`, point to dispatcher
 - **Firewall** (`scripts/init-firewall.sh`): Uses ipset + iptables to whitelist domains. Config from `$SIDECAR_CONFIG_DIR/allowed-domains.txt`

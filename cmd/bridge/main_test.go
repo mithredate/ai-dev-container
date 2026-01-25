@@ -160,20 +160,6 @@ func TestInitWrappers(t *testing.T) {
 			expectedSkipped: 0,
 		},
 		{
-			name: "creates symlinks for overrides",
-			config: &Config{
-				Version: "1",
-				Commands: map[string]Command{
-					"go": {Container: "golang", Exec: "go"},
-				},
-				Overrides: map[string]Override{
-					"echo": {Native: "/bin/echo"},
-				},
-			},
-			expectedCreated: 2,
-			expectedSkipped: 0,
-		},
-		{
 			name: "skips existing symlinks pointing to dispatcher",
 			config: &Config{
 				Version: "1",

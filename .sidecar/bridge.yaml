@@ -34,8 +34,3 @@ commands:
     exec: golangci-lint
     workdir: /workspace
 
-# Native overrides - run locally instead of routing to sidecar
-# Claude CLI should always run locally (recursive routing would be bad!)
-overrides:
-  claude:
-    native: /usr/local/bin/claude
