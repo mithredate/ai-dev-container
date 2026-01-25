@@ -128,20 +128,28 @@ fi
 echo ""
 echo "Test 8: native override runs node locally (not via sidecar)"
 # Stop the node sidecar to prove native execution works
-docker compose stop node
+docker compose stop node 2>/dev/null
+
+echo "Node service stopped"
 # The claude override points to our test script which requires node
 # If this works, it proves node runs natively (not routed to the stopped sidecar)
-CLAUDE_SYMLINK_TARGET=$(docker compose exec -T claude readlink /scripts/wrappers/claude 2>/dev/null || echo "")
-if [ "$CLAUDE_SYMLINK_TARGET" != "dispatcher" ]; then
-    fail "claude symlink not created (expected 'dispatcher', got '$CLAUDE_SYMLINK_TARGET')"
+WHICH_CLAUDE_TARGET=$(docker compose exec -T claude which claude 2>/dev/null || echo "")
+if [ "$WHICH_CLAUDE_TARGET" != "/scripts/wrappers/claude" ]; then
+    fail "incorrect claude reference (expected '/scripts/wrappers/claude', got '$WHICH_CLAUDE_TARGET')"
 else
-    OUTPUT=$(docker compose exec -T claude /scripts/wrappers/claude 2>&1)
-    if [ "$OUTPUT" = "native-node-ok" ]; then
-        pass "native override runs node locally"
+    CLAUDE_SYMLINK_TARGET=$(docker compose exec -T claude readlink /scripts/wrappers/claude 2>/dev/null || echo "")
+    if [ "$CLAUDE_SYMLINK_TARGET" != "dispatcher" ]; then
+        fail "claude symlink not created (expected 'dispatcher', got '$CLAUDE_SYMLINK_TARGET')"
     else
-        fail "native override runs node locally (expected 'native-node-ok', got '$OUTPUT')"
+        OUTPUT=$(docker compose exec -T claude /scripts/wrappers/claude 2>&1)
+        if [ "$OUTPUT" = "native-node-ok" ]; then
+            pass "native override runs node locally"
+        else
+            fail "native override runs node locally (expected 'native-node-ok', got '$OUTPUT')"
+        fi
     fi
 fi
+
 
 # Cleanup
 echo ""

@@ -15,8 +15,6 @@ services:
       - .:/workspaces/test
       - /var/run/docker.sock:/var/run/docker.sock
     working_dir: /workspaces/test
-    # Keep container running for test commands
-    command: ["sleep", "infinity"]
     # Start as root for firewall init, entrypoint drops to claude user
     cap_add:
       - NET_ADMIN
