@@ -73,10 +73,13 @@ run_as_user() {
     fi
 }
 
-# Run Claude CLI (as claude user)
+# Run Claude CLI
+# The wrapper at /scripts/wrappers/claude handles:
+# - CLAUDE_YOLO flag injection
+# - Dropping to non-root user
 run_claude() {
     log "Starting Claude CLI..."
-    run_as_user claude "$@"
+    exec claude "$@"
 }
 
 # Main entry point

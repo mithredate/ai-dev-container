@@ -73,9 +73,9 @@ services:
     volumes:
       # Mount current project directory as workspace
       - .:/workspaces/claude-sidecar
-      # Named volume for Claude session persistence and config (per-project)
-      - claude-config:/home/claude/.claude
+      # Named volumes for persistence - ORDER MATTERS: parent must come before child
       - claude-home:/home/claude/
+      - claude-config:/home/claude/.claude
       # Mount credentials file extracted from host (macOS keychain or Linux ~/.claude/.credentials.json)
       # See README for extraction instructions
       - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
