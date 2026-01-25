@@ -29,4 +29,4 @@ overrides:
   echo:
     claude: /bin/echo
   claude:
-    claude: /usr/local/bin/claude
+    claude: /workspaces/test/node-test-app/claude

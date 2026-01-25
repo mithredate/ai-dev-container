@@ -105,7 +105,7 @@ else
     fail "entrypoint init_wrappers: /scripts/wrappers/go not pointing to dispatcher (got '$GO_SYMLINK_TARGET')"
 fi
 
-# Test 7: native override execution via symlink
+# Test 7: native override execution via symlink (echo)
 echo ""
 echo "Test 7: native override execution via symlink (echo)"
 # The echo command is in overrides with native: /bin/echo
@@ -118,12 +118,28 @@ else
     # The symlink calls dispatcher -> bridge -> executes /bin/echo natively (not docker exec)
     OUTPUT=$(docker compose exec -T claude /scripts/wrappers/echo hello 2>&1)
     if [ "$OUTPUT" = "hello" ]; then
-        # Verify it did NOT go through docker exec by checking that test-golang container wasn't used
-        # Since echo is in overrides (not commands), it should execute natively
-        # We can verify this by checking the exit code and output are correct
         pass "native override echo via symlink"
     else
         fail "native override echo via symlink (expected 'hello', got '$OUTPUT')"
+    fi
+fi
+
+# Test 8: native override with node (claude test script)
+echo ""
+echo "Test 8: native override runs node locally (not via sidecar)"
+# Stop the node sidecar to prove native execution works
+docker compose stop node
+# The claude override points to our test script which requires node
+# If this works, it proves node runs natively (not routed to the stopped sidecar)
+CLAUDE_SYMLINK_TARGET=$(docker compose exec -T claude readlink /scripts/wrappers/claude 2>/dev/null || echo "")
+if [ "$CLAUDE_SYMLINK_TARGET" != "dispatcher" ]; then
+    fail "claude symlink not created (expected 'dispatcher', got '$CLAUDE_SYMLINK_TARGET')"
+else
+    OUTPUT=$(docker compose exec -T claude /scripts/wrappers/claude 2>&1)
+    if [ "$OUTPUT" = "native-node-ok" ]; then
+        pass "native override runs node locally"
+    else
+        fail "native override runs node locally (expected 'native-node-ok', got '$OUTPUT')"
     fi
 fi
 
