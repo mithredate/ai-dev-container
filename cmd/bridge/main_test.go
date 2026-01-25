@@ -152,7 +152,7 @@ func TestInitWrappers(t *testing.T) {
 			config: &Config{
 				Version: "1",
 				Commands: map[string]Command{
-					"go": {Container: "golang", Exec: "go"},
+					"go":  {Container: "golang", Exec: "go"},
 					"npm": {Container: "node", Exec: "npm"},
 				},
 			},
@@ -223,7 +223,7 @@ func TestInitWrappers(t *testing.T) {
 			config: &Config{
 				Version: "1",
 				Commands: map[string]Command{
-					"go": {Container: "golang", Exec: "go"},
+					"go":  {Container: "golang", Exec: "go"},
 					"npm": {Container: "node", Exec: "npm"},
 				},
 			},
@@ -320,7 +320,7 @@ func TestInitWrappers_Idempotent(t *testing.T) {
 	config := &Config{
 		Version: "1",
 		Commands: map[string]Command{
-			"go": {Container: "golang", Exec: "go"},
+			"go":  {Container: "golang", Exec: "go"},
 			"npm": {Container: "node", Exec: "npm"},
 		},
 	}

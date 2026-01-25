@@ -194,11 +194,11 @@ func TestValidate_OverridesField(t *testing.T) {
 
 func TestTranslatePathWithMatch(t *testing.T) {
 	tests := []struct {
-		name           string
-		cmd            Command
-		path           string
-		expectedPath   string
-		expectedMatch  bool
+		name          string
+		cmd           Command
+		path          string
+		expectedPath  string
+		expectedMatch bool
 	}{
 		{
 			name: "path matches and translates to different path",

@@ -142,8 +142,8 @@ func runCommand(config *Config, args []string) int {
 
 // determineWorkdir determines the working directory to use for docker exec.
 // Priority: 1) Translated CWD (if a path mapping matches)
-//           2) Static workdir from config (if set and no mapping matched)
-//           3) Current CWD (as fallback)
+//  2. Static workdir from config (if set and no mapping matched)
+//  3. Current CWD (as fallback)
 func determineWorkdir(cmd *Command) string {
 	cwd, err := os.Getwd()
 	if err != nil {
