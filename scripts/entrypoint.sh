@@ -21,6 +21,38 @@ log() {
     echo "[entrypoint] $1" >&2
 }
 
+# Adjust claude user's UID/GID based on PUID/PGID environment variables
+# This allows the container to match the host user's UID/GID for proper
+# file ownership in mounted volumes across different platforms
+adjust_user_ids() {
+    # Skip if not running as root
+    if [ "$(id -u)" -ne 0 ]; then
+        return 0
+    fi
+
+    # Get current UID/GID
+    CURRENT_UID=$(id -u "$CONTAINER_USER")
+    CURRENT_GID=$(id -g "$CONTAINER_USER")
+
+    # Adjust GID if PGID is set and different from current
+    if [ -n "$PGID" ] && [ "$PGID" != "$CURRENT_GID" ]; then
+        log "Adjusting claude group GID from $CURRENT_GID to $PGID"
+        sed -i "s/^claude:x:${CURRENT_GID}:/claude:x:${PGID}:/" /etc/group
+    fi
+
+    # Adjust UID if PUID is set and different from current
+    if [ -n "$PUID" ] && [ "$PUID" != "$CURRENT_UID" ]; then
+        log "Adjusting claude user UID from $CURRENT_UID to $PUID"
+        sed -i "s/^claude:x:${CURRENT_UID}:/claude:x:${PUID}:/" /etc/passwd
+    fi
+
+    # Fix ownership of home directory if either was changed
+    if { [ -n "$PUID" ] && [ "$PUID" != "$CURRENT_UID" ]; } || \
+       { [ -n "$PGID" ] && [ "$PGID" != "$CURRENT_GID" ]; }; then
+        chown -R "$CONTAINER_USER:$CONTAINER_USER" /home/claude
+    fi
+}
+
 # Initialize firewall if not already done
 # This runs as root and only runs once per container lifecycle
 init_firewall() {
@@ -89,6 +121,9 @@ main() {
 
     # Initialize wrapper symlinks (runs once after firewall)
     init_wrappers
+
+    # Adjust claude user UID/GID if PUID/PGID env vars are set
+    adjust_user_ids
 
     # If arguments provided and first arg is "claude", run Claude
     if [ "$1" = "claude" ]; then

@@ -47,6 +47,8 @@ docker compose exec claude claude            # Run Claude interactively
 |----------|---------|
 | `SIDECAR_CONFIG_DIR` | Config directory (default: `$PWD/.sidecar`) |
 | `CLAUDE_YOLO` | Set `1` for `--dangerously-skip-permissions` |
+| `PUID` | Set container user UID at runtime (for volume permissions) |
+| `PGID` | Set container group GID at runtime (for volume permissions) |
 
 ## Development Workflow
 

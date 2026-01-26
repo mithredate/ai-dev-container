@@ -74,11 +74,13 @@ ENV DOCKER_HOST=""
 # Set SHELL env var for Claude Code's Bash tool
 ENV SHELL=/bin/bash
 
-# Build arguments for configurable user UID/GID and working directory
-# Default to 501 (macOS default UID/GID) for seamless file ownership on macOS hosts
-# For Linux hosts, override with: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
-ARG CLAUDE_UID=501
-ARG CLAUDE_GID=501
+# Build arguments for default user UID/GID
+# Default to 1000 (common Linux default UID/GID)
+# For runtime override (recommended for pre-built images), use PUID/PGID env vars:
+#   docker run -e PUID=$(id -u) -e PGID=$(id -g) ...
+# The entrypoint will adjust the claude user's UID/GID at container start
+ARG CLAUDE_UID=1000
+ARG CLAUDE_GID=1000
 
 
 # Create non-root user 'claude' with configurable UID/GID
