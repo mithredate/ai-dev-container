@@ -1,8 +1,0 @@
-## Codebase Patterns
-- Use hadolint via Docker for Dockerfile linting: `docker run --rm -i hadolint/hadolint < Dockerfile`
-- Validate YAML syntax with: `docker run --rm -v /path:/data mikefarah/yq '.' /data/file.yaml`
-- GitHub Actions workflow files go in `.github/workflows/`
-- yq binary architecture format: `yq_linux_amd64` or `yq_linux_arm64` based on TARGETARCH
-
----
-

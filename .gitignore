@@ -7,3 +7,6 @@ ralph/.last-branch
 .credentials.json
 
 .idea
+
+ralph/
+tasks/
