@@ -65,10 +65,16 @@ The container includes an optional firewall that whitelists allowed domains usin
 
 ### User UID/GID
 
-Default UID/GID is 501 (macOS). For Linux (typically 1000):
+Default UID/GID is 1000 (Linux). Override at runtime (recommended):
 
 ```bash
-docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
+docker compose run -e PUID=$(id -u) -e PGID=$(id -g) claude
+```
+
+Or at build time:
+
+```bash
+docker compose build --build-arg CLAUDE_UID=501 --build-arg CLAUDE_GID=501
 ```
 
 ## Authentication
@@ -106,7 +112,6 @@ Web UI for monitoring Claude sessions. Configuration included in [`examples/comp
 - Socket proxy limits Docker API to container list/exec only
 - Network firewall restricts outbound to allowed domains
 - Runs as non-root user with configurable UID/GID
-- Shadow sensitive files with `/dev/null` mounts (see examples)
 
 ## Building
 

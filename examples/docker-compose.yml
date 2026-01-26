@@ -66,7 +66,7 @@ services:
   # The Claude Code container that uses the socket proxy
   # to execute commands in your project's containers.
   claude:
-    image: claude-brain-sidecar:latest
+    image: ghcr.io/mithredate/claude-sidecar:latest
     # Build from local Dockerfile if image not available:
     # build: ./path/to/claude-sidecar
     depends_on:
