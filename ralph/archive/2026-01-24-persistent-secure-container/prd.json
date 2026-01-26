@@ -42,9 +42,9 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": true,
-      "attempts": 2,
-      "notes": "Verified via go build, go vet, and unit tests. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Config schema change - must not break existing functionality"
     },
     {
       "id": "#9/US-003",
@@ -61,8 +61,8 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": true,
-      "attempts": 1,
+      "passes": false,
+      "attempts": 0,
       "notes": "Resolution logic - builds on US-002"
     },
     {
@@ -81,8 +81,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": true,
-      "attempts": 1,
+      "passes": false,
+      "attempts": 0,
       "notes": "Native execution via syscall.Exec - builds on US-003"
     },
     {
@@ -104,9 +104,9 @@
         "Typecheck passes"
       ],
       "priority": 5,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Implemented TranslatePathWithMatch and determineWorkdir. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Working directory translation using existing paths mapping"
     },
     {
       "id": "#9/US-006",
@@ -123,9 +123,9 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Single dispatcher replaces 18+ individual wrapper scripts. Shellcheck passes, go build and go vet pass."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Single dispatcher replaces 18+ individual wrapper scripts"
     },
     {
       "id": "#9/US-007",
@@ -144,9 +144,9 @@
         "Typecheck passes"
       ],
       "priority": 7,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Implemented --init-wrappers flag with idempotent symlink generation. Unit tests and integration test added."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Symlink generation - builds on US-006"
     },
     {
       "id": "#9/US-008",
@@ -162,9 +162,9 @@
         "Typecheck passes"
       ],
       "priority": 8,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Implemented init_wrappers call in main() and removed CLAUDE_STARTING logic. Test 6 added. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Entrypoint integration - builds on US-007"
     },
     {
       "id": "#9/US-009",
@@ -178,9 +178,9 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Added overrides section to test config and Test 7 to run-tests.sh. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "End-to-end test for native overrides"
     },
     {
       "id": "#9/US-010",
@@ -196,9 +196,9 @@
         "Typecheck passes"
       ],
       "priority": 10,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Deleted 18 legacy wrappers, removed BRIDGE_ENABLED from all config and documentation. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Final cleanup - must be last after all features work"
     },
     {
       "id": "#9/US-011",
@@ -214,9 +214,9 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": true,
-      "attempts": 1,
-      "notes": "Added overrides section with claude command to both example and project config files. Updated CLAUDE.md with new architecture docs. Integration tests cannot run in this environment."
+      "passes": false,
+      "attempts": 0,
+      "notes": "Documentation updates - can run after cleanup"
     }
   ]
 }

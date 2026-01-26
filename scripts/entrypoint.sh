@@ -52,6 +52,18 @@ init_firewall() {
     fi
 }
 
+# Initialize wrapper symlinks
+# Creates symlinks in /scripts/wrappers that point to the dispatcher
+# This must run after firewall init and before dropping to claude user
+init_wrappers() {
+    log "Initializing command wrappers..."
+    if bridge --init-wrappers /scripts/wrappers 2>&1; then
+        log "Wrapper initialization complete"
+    else
+        log "Warning: Wrapper initialization failed"
+    fi
+}
+
 # Run a command as the claude user (if we're currently root)
 run_as_user() {
     if [ "$(id -u)" -eq 0 ]; then
@@ -61,21 +73,22 @@ run_as_user() {
     fi
 }
 
-# Run Claude CLI (as claude user)
+# Run Claude CLI
+# The wrapper at /scripts/wrappers/claude handles:
+# - CLAUDE_YOLO flag injection
+# - Dropping to non-root user
 run_claude() {
-    # Set CLAUDE_STARTING=1 so the node wrapper knows to use native node
-    # for Claude's startup. The wrapper will unset this for child processes,
-    # allowing subsequent node/npm/npx calls to be routed through the bridge.
-    export CLAUDE_STARTING=1
-
     log "Starting Claude CLI..."
-    run_as_user claude "$@"
+    exec claude "$@"
 }
 
 # Main entry point
 main() {
     # Initialize firewall on container start (runs once as root)
     init_firewall
+
+    # Initialize wrapper symlinks (runs once after firewall)
+    init_wrappers
 
     # If arguments provided and first arg is "claude", run Claude
     if [ "$1" = "claude" ]; then

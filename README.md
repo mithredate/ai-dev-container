@@ -28,7 +28,7 @@ docker compose down                      # Stop container
 
 ## How It Works
 
-Claude runs in its own container. When `BRIDGE_ENABLED=1`, a bridge script routes commands (`php`, `npm`, `go`, etc.) to your project's sidecar containers via wrapper scripts and Docker socket proxy.
+Claude runs in its own container. A bridge routes commands (`php`, `npm`, `go`, etc.) to your project's sidecar containers via dispatcher symlinks and Docker socket proxy. Symlinks are generated at container startup from `bridge.yaml` configuration.
 
 ## Configuration
 
@@ -97,7 +97,6 @@ Web UI for monitoring Claude sessions. Configuration included in [`examples/comp
 
 | Variable | Description |
 |----------|-------------|
-| `BRIDGE_ENABLED` | `1` to route commands through bridge |
 | `CLAUDE_YOLO` | `1` for `--dangerously-skip-permissions` |
 | `ANTHROPIC_API_KEY` | Optional API key (otherwise authenticate interactively) |
 | `SIDECAR_CONFIG_DIR` | Config directory (default: `$PWD/.sidecar`) |

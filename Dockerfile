@@ -16,7 +16,7 @@ COPY cmd/ ./cmd/
 RUN CGO_ENABLED=0 go build -ldflags="-s -w" -o /usr/local/bin/bridge ./cmd/bridge
 
 # Stage 2: Runtime stage - minimal production image
-FROM node:20-alpine AS runtime
+FROM alpine:3.21 AS runtime
 
 # Install runtime dependencies:
 # - bash: Required by Claude Code CLI for shell execution
@@ -26,25 +26,33 @@ FROM node:20-alpine AS runtime
 # - ipset: Efficient IP set matching for firewall
 # - iproute2: Network tools including 'ip' command
 # - bind-tools: DNS utilities including 'dig' for domain resolution
-# - curl: HTTP client for fetching GitHub IP ranges
+# - curl: HTTP client for fetching GitHub IP ranges and Claude Code installer
 # - jq: JSON parsing for GitHub API responses
+# - libstdc++: C++ standard library required by Claude Code native binary
+# - libgcc: GCC runtime library required by Claude Code native binary
 # Multi-stage build ensures Go compiler and build tools are not included
 RUN apk add --no-cache \
     bash \
-    docker-cli=29.1.3-r1 \
+    docker-cli \
     git \
     iptables \
     ipset \
     iproute2 \
     bind-tools \
     curl \
-    jq && \
+    jq \
+    libstdc++ \
+    libgcc && \
     rm -rf /var/cache/apk/*
 
-# Install claude-code CLI globally and clean npm artifacts
-RUN npm install -g @anthropic-ai/claude-code@2.1.12 && \
-    npm cache clean --force && \
-    rm -rf /tmp/*
+# Install Claude Code native binary
+# The native binary doesn't require Node.js - it's a self-contained executable
+# Installer creates a symlink at ~/.local/bin/claude -> ~/.local/share/claude/versions/<version>
+# We move the actual binary to /usr/local/bin and clean up the local directories
+# Note: The install script requires bash (not sh) due to bash-specific syntax
+RUN curl -fsSL https://claude.ai/install.sh | bash && \
+    cp -L /root/.local/bin/claude /usr/local/bin/claude && \
+    rm -rf /root/.local /root/.claude /tmp/*
 
 # Copy Go bridge binary from builder stage
 COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
@@ -53,10 +61,8 @@ COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 COPY --chmod=755 scripts/entrypoint.sh /scripts/entrypoint.sh
 COPY --chmod=755 scripts/init-firewall.sh /scripts/init-firewall.sh
 
-# Copy wrapper scripts to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
-# These scripts route commands through the bridge when BRIDGE_ENABLED=1
-# The node wrapper has special handling via CLAUDE_STARTING env var to allow Claude Code
-# (a Node.js app) to start with native node, while routing subsequent node calls through the bridge
+# Copy dispatcher script to /scripts/wrappers/ (not /usr/local/bin/ to avoid overwriting real binaries)
+# Symlinks are generated at startup via bridge --init-wrappers, pointing to the dispatcher
 COPY --chmod=755 scripts/wrappers /scripts/wrappers/
 
 # Prepend wrappers directory to PATH so wrappers take precedence

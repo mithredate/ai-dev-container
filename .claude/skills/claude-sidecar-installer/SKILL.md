@@ -50,7 +50,6 @@ services:
       - NET_RAW
     environment:
       DOCKER_HOST: tcp://socket-proxy:2375
-      BRIDGE_ENABLED: "1"
     volumes:
       - .:/workspace
       - claude-config:/home/claude/.claude

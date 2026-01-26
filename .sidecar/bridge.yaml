@@ -33,3 +33,4 @@ commands:
     container: golang
     exec: golangci-lint
     workdir: /workspace
+

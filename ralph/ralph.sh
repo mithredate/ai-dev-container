@@ -118,7 +118,7 @@ for i in $(seq 1 $MAX_ITERATIONS); do
 
   # Run claude with retry logic for session limits
   while true; do
-    OUTPUT=$(cat "$SCRIPT_DIR/claude.prompt.md" | docker compose exec -T -e CLAUDE_STARTING=1 claude claude 2>&1 | tee /dev/stderr) || true
+    OUTPUT=$(cat "$SCRIPT_DIR/claude.prompt.md" | docker compose exec -e CLAUDE_YOLO=1 claude claude 2>&1 | tee /dev/stderr) || true
 
     # Check for session limit
     if echo "$OUTPUT" | grep -qi "$SESSION_LIMIT_PATTERN"; then
