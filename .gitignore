@@ -5,3 +5,5 @@ ralph/.last-branch
 
 # Claude credentials extracted from macOS keychain (sensitive)
 .credentials.json
+
+.idea
