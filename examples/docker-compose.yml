@@ -84,9 +84,10 @@ services:
     volumes:
       # Mount your project - the path here should match working_dir below
       - .:/workspaces/sample-project
-      # Named volume for Claude session persistence (per-project)
-      # Credentials persist across container restarts without UID mismatch issues
-      - claude-config:/home/claude/.claude
+      # Persist the whole /home/claude so both ~/.claude/ (settings, history,
+      # commands, project MCP state) and ~/.claude.json (user-scope MCP, theme,
+      # onboarding flags) survive container recreates.
+      - claude-home:/home/claude
       # Optional: Mount credentials extracted from host for MCP SSO support
       # macOS: security find-generic-password -s "Claude Code-credentials" -w > .credentials.json
       # Linux: cp ~/.claude/.credentials.json .credentials.json
@@ -99,25 +100,6 @@ services:
     # Usage:
     #   docker-compose exec claude claude                   # Run interactively
     #   docker-compose exec -e CLAUDE_YOLO=1 claude claude  # Run in YOLO mode
-
-  # ===========================================
-  # Claude Code Viewer (Optional)
-  # ===========================================
-  # Web UI for monitoring Claude sessions in real-time
-  # Access at http://localhost:3000 (or VIEWER_PORT if customized)
-  viewer:
-    image: node:20-alpine
-    command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
-    environment:
-      PORT: ${VIEWER_PORT:-3000}
-      # Point viewer to the mounted claude data directory (read-only)
-      CCV_GLOBAL_CLAUDE_DIR: /claude-data
-    ports:
-      - "${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}"
-    volumes:
-      # Mount claude-config volume read-only at custom path to avoid permission conflicts
-      - claude-config:/claude-data:ro
-    restart: unless-stopped
 
   # ===========================================
   # Example Application Containers
@@ -151,8 +133,9 @@ services:
       - db-data:/var/lib/postgresql/data
 
 volumes:
-  # Per-project Claude config volume (stores credentials, settings, session logs)
-  claude-config:
+  # Persists /home/claude (settings, session history, .claude.json, MCP state).
+  # Credentials come in via a bind-mount overlay — see services[*].volumes.
+  claude-home:
   db-data:
 
 # Networks (optional - using default bridge network)

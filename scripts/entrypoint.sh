@@ -56,6 +56,14 @@ adjust_user_ids() {
 # Initialize firewall if not already done
 # This runs as root and only runs once per container lifecycle
 init_firewall() {
+    # Skip unless explicitly enabled. Critical safety: if the container shares
+    # the host's network namespace (network_mode: host), iptables rules here
+    # mutate the HOST's OUTPUT chain and will blackhole host traffic.
+    if [ "${ENABLE_FIREWALL:-0}" != "1" ]; then
+        log "Firewall disabled (ENABLE_FIREWALL != 1); skipping"
+        return 0
+    fi
+
     # Skip if firewall already initialized (marker file exists)
     if [ -f "$FIREWALL_MARKER" ]; then
         log "Firewall already initialized (skipping)"

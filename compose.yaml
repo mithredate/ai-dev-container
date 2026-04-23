@@ -1,30 +1,58 @@
 # Docker Compose v2 configuration for claude-sidecar
 # =====================================================
-# This compose file sets up:
-#   1. claude: The main Claude Code container (built from local Dockerfile)
-#   2. golang: A Go sidecar container for running go commands via bridge
-#   3. socket-proxy: Docker socket proxy for secure, limited Docker access
-#   4. viewer: Claude Code Viewer web UI for monitoring sessions
+# Two profiles:
+#   - default (isolated): claude service uses bridge network with firewall on.
+#     OAuth callbacks on random ports do NOT work in this mode (known limitation).
+#   - "host-network" profile: claude-host uses host network, firewall off.
+#     Works out-of-the-box for OAuth callbacks / MCP SSO.
 #
 # Usage:
-#   docker compose up -d                              # Start all services
-#   docker compose exec claude claude                 # Run Claude interactively
-#   docker compose exec -e CLAUDE_YOLO=1 claude claude  # Run Claude in YOLO mode
+#   docker compose up -d                                  # Isolated (default)
+#   docker compose --profile host-network up -d           # Host-network mode
+#   docker compose exec claude claude                     # Run Claude (isolated)
+#   docker compose exec claude-host claude                # Run Claude (host-network)
+#   docker compose exec -e CLAUDE_YOLO=1 claude claude
 #
-# For development on this project, this allows Claude to run go commands
-# (go build, go test, go vet, etc.) in the golang sidecar container.
+# Prerequisite: create .credentials.json before first `up`. See scripts/sync-creds.sh
+#
+# Do not run both profiles simultaneously: they share the .credentials.json
+# bind-mount and the claude-home volume.
+
+# Shared config for both claude variants
+x-claude-common: &claude-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+    args:
+      CLAUDE_UID: ${CLAUDE_UID:-501}
+      CLAUDE_GID: ${CLAUDE_GID:-501}
+  stdin_open: true
+  tty: true
+  environment: &claude-common-env
+    SIDECAR_CONFIG_DIR: /workspaces/claude-sidecar/.sidecar
+  volumes: &claude-common-volumes
+    - .:/workspaces/claude-sidecar
+    # Whole home dir is persisted so both ~/.claude/ and ~/.claude.json stick
+    # across container recreates (onboarding state, MCP config, settings).
+    - claude-home:/home/claude
+    # Credentials bind mount is writable so Claude can refresh OAuth tokens,
+    # and sync-creds.sh can refresh it from the host keychain.
+    - ./.credentials.json:/home/claude/.claude/.credentials.json
+    - /dev/null:/workspaces/claude-sidecar/.env
+    - /dev/null:/workspaces/claude-sidecar/.credentials.json
+  working_dir: /workspaces/claude-sidecar
 
 services:
-  # Docker socket proxy - limits Docker API access to exec operations only
+  # Docker socket proxy: restricts Docker API to an allowed subset.
+  # Also published on host loopback so the host-network claude-host service
+  # can reach it (service-name DNS doesn't resolve in host netns).
   socket-proxy:
     image: tecnativa/docker-socket-proxy
     container_name: claude-sidecar-socket-proxy
     environment:
-      # Only allow container inspection and exec operations
       - CONTAINERS=1
       - EXEC=1
       - POST=1
-      # Disable all other Docker API endpoints
       - IMAGES=1
       - NETWORKS=1
       - VOLUMES=1
@@ -40,80 +68,57 @@ services:
       - SESSION=0
       - SWARM=0
       - SYSTEM=0
+    ports:
+      # Loopback-only publish so the host-network claude-host can reach it at 127.0.0.1:12375
+      - "127.0.0.1:12375:2375"
     volumes:
-      # Mount Docker socket read-only to socket-proxy only
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
 
-  # Main Claude Code container
+  # Default: bridge network with firewall and compose-DNS socket-proxy.
+  # OAuth callback ports on random high ports don't work here (known limitation).
   claude:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      # Configure user UID/GID for file ownership compatibility with host:
-      # - Default: 501 (macOS default UID/GID)
-      # - For Linux: Override with CLAUDE_UID=1000 and CLAUDE_GID=1000
-      # Usage: docker compose build --build-arg CLAUDE_UID=1000 --build-arg CLAUDE_GID=1000
-      args:
-        CLAUDE_UID: ${CLAUDE_UID:-501}
-        CLAUDE_GID: ${CLAUDE_GID:-501}
+    <<: *claude-common
     container_name: claude-sidecar-claude
-    stdin_open: true
-    tty: true
-    # Required capabilities for firewall initialization (iptables/ipset)
     cap_add:
       - NET_ADMIN
       - NET_RAW
     environment:
-      # Base directory for claude-sidecar config files (bridge.yaml, allowed-domains.txt)
-      # This is used by both the bridge and firewall scripts
-      - SIDECAR_CONFIG_DIR=/workspaces/claude-sidecar/.sidecar
-      # Docker host via socket proxy for secure, limited Docker access
-      - DOCKER_HOST=tcp://socket-proxy:2375
-    volumes:
-      # Mount current project directory as workspace
-      - .:/workspaces/claude-sidecar
-      # Named volumes for persistence - ORDER MATTERS: parent must come before child
-      - claude-home:/home/claude/
-      - claude-config:/home/claude/.claude
-      # Mount credentials file extracted from host (macOS keychain or Linux ~/.claude/.credentials.json)
-      # See README for extraction instructions
-      - ./.credentials.json:/home/claude/.claude/.credentials.json:ro
-      - /dev/null:/workspaces/claude-sidecar/.env
-      - /dev/null:/workspaces/claude-sidecar/.credentials.json
+      <<: *claude-common-env
+      ENABLE_FIREWALL: "1"
+      DOCKER_HOST: tcp://socket-proxy:2375
     depends_on:
       - socket-proxy
       - golang
-    working_dir: /workspaces/claude-sidecar
 
-  # Go sidecar container for running go commands
+  # Host-network: shares host netns, firewall off. OAuth callbacks work.
+  # Opt-in via --profile host-network.
+  claude-host:
+    <<: *claude-common
+    container_name: claude-sidecar-claude-host
+    profiles: ["host-network"]
+    network_mode: host
+    environment:
+      <<: *claude-common-env
+      # Firewall off: in host netns, iptables rules would mutate the HOST's
+      # chains and blackhole the user's outbound traffic. Must stay 0.
+      ENABLE_FIREWALL: "0"
+      # Reach socket-proxy via published loopback port (no compose DNS in host netns)
+      DOCKER_HOST: tcp://127.0.0.1:12375
+    depends_on:
+      - socket-proxy
+      - golang
+
+  # Go sidecar container for running go commands (used by both profiles)
   golang:
     image: golang:1.24-alpine
     container_name: claude-sidecar-golang
     command: ["sleep", "infinity"]
     volumes:
-      # Mount current project directory (same as claude container)
       - .:/workspaces/claude-sidecar
     working_dir: /workspaces/claude-sidecar
 
-  # Claude Code Viewer - web UI for monitoring Claude sessions
-  viewer:
-    image: node:20-alpine
-    container_name: claude-sidecar-viewer
-    command: ["npx", "@kimuson/claude-code-viewer@latest", "--hostname", "0.0.0.0"]
-    environment:
-      - PORT=${VIEWER_PORT:-3000}
-      # Point viewer to the mounted claude data directory (read-only)
-      - CCV_GLOBAL_CLAUDE_DIR=/claude-data
-    ports:
-      - "${VIEWER_PORT:-3000}:${VIEWER_PORT:-3000}"
-    volumes:
-      # Mount claude-config volume read-only at custom path to avoid permission conflicts
-      - claude-config:/claude-data:ro
-    restart: unless-stopped
-
-# Named volumes for persistent storage
 volumes:
-  # Per-project Claude config volume (stores credentials, settings, etc.)
-  claude-config:
+  # Persists /home/claude (settings, session history, .claude.json, MCP state).
+  # Credentials come in via a bind-mount overlay — see services[*].volumes.
   claude-home:

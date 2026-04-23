@@ -6,6 +6,9 @@ ralph/.last-branch
 # Claude credentials extracted from macOS keychain (sensitive)
 .credentials.json
 
+# Per-machine Claude Code local permissions / settings overrides
+.claude/settings.local.json
+
 .idea
 
 ralph/
