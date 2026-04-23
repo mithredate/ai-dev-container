@@ -1,6 +1,7 @@
 #!/bin/sh
-# Wrapper for claude that handles CLAUDE_YOLO and ensures non-root execution
-CLAUDE_BIN="/usr/local/bin/claude"
+# Wrapper for claude that handles CLAUDE_YOLO and ensures non-root execution.
+# CLAUDE_BIN points at the claude user's native install so self-update works.
+CLAUDE_BIN="/home/claude/.local/bin/claude"
 CONTAINER_USER="claude"
 
 # Add --dangerously-skip-permissions if CLAUDE_YOLO is set

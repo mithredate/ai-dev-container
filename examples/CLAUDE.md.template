@@ -194,7 +194,11 @@ volumes:
 # CORRECT - Only mount project directory and Claude session data
 volumes:
   - .:/workspace                      # Your project (safe)
-  - ./.claude:/home/claude/.claude    # Claude session persistence (safe)
+  - claude-home:/home/claude          # Claude session persistence (safe)
+
+# And declare the named volume at the bottom:
+volumes:
+  claude-home:
 ```
 - Pass required credentials as environment variables instead
 - The Claude container should only access project files at `/workspace`

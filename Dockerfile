@@ -45,15 +45,6 @@ RUN apk add --no-cache \
     libgcc && \
     rm -rf /var/cache/apk/*
 
-# Install Claude Code native binary
-# The native binary doesn't require Node.js - it's a self-contained executable
-# Installer creates a symlink at ~/.local/bin/claude -> ~/.local/share/claude/versions/<version>
-# We move the actual binary to /usr/local/bin and clean up the local directories
-# Note: The install script requires bash (not sh) due to bash-specific syntax
-RUN curl -fsSL https://claude.ai/install.sh | bash && \
-    cp -L /root/.local/bin/claude /usr/local/bin/claude && \
-    rm -rf /root/.local /root/.claude /tmp/*
-
 # Copy Go bridge binary from builder stage
 COPY --from=builder /usr/local/bin/bridge /usr/local/bin/bridge
 
@@ -89,6 +80,15 @@ RUN addgroup -g ${CLAUDE_GID} claude && \
     adduser -u ${CLAUDE_UID} -G claude -h /home/claude -D claude && \
     mkdir -p /home/claude/.claude && \
     chown claude:claude /home/claude/.claude
+
+# Install Claude Code native binary AS THE CLAUDE USER so it lands at
+# ~/.local/bin/claude (the installer's native layout). Keeping the native
+# install intact lets Claude's self-updater work from inside the container —
+# image rebuilds only matter for bootstrapping new volumes.
+# The install.sh script requires bash (not sh) due to bash-specific syntax.
+USER claude
+RUN curl -fsSL https://claude.ai/install.sh | bash
+USER root
 
 # Note: WORKDIR is intentionally not set here.
 # Each project specifies its own working directory via docker-compose.yml (working_dir: /app)
